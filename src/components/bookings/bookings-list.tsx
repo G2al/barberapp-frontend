@@ -13,19 +13,23 @@ import { AppImage } from "@/components/ui/app-image";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, ErrorState, Input, PageTitle, Skeleton } from "@/components/ui/primitives";
 
-const filters: Array<[string, string]> = [["all", "Tutte"], ["pending", "In attesa"], ["confirmed", "Confermate"], ["completed", "Completate"], ["cancelled", "Annullate"]];
+const filters: Array<[string, string]> = [["confirmed", "Confermate"], ["completed", "Completate"], ["cancelled", "Annullate"], ["all", "Tutte"]];
 
 export function BookingsList() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: queryKeys.bookings, queryFn: endpoints.bookings, refetchOnMount: "always" });
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("confirmed");
   const [notice, setNotice] = useState("");
   const cancel = useMutation({ mutationFn: (id: Booking["id"]) => endpoints.cancelBooking(id), onSuccess: async () => { setNotice("Prenotazione annullata: lo slot è stato liberato."); await queryClient.invalidateQueries({ queryKey: queryKeys.bookings, refetchType: "all" }); }, onError: () => setNotice("") });
+
   const data = useMemo(() => {
     const now = new Date();
     const list = (query.data?.bookings ?? []).filter((booking) => (filter === "all" || booking.status === filter) && `${booking.service?.name ?? ""} ${fullName(booking.staff)}`.toLowerCase().includes(search.toLowerCase()));
-    return { future: list.filter((booking) => bookingDate(booking.date, booking.time) >= now).sort((a, b) => +bookingDate(a.date, a.time) - +bookingDate(b.date, b.time)), past: list.filter((booking) => bookingDate(booking.date, booking.time) < now).sort((a, b) => +bookingDate(b.date, b.time) - +bookingDate(a.date, a.time)) };
+    const future = list.filter((booking) => ["pending", "confirmed"].includes(booking.status) && bookingDate(booking.date, booking.time) >= now).sort((a, b) => +bookingDate(a.date, a.time) - +bookingDate(b.date, b.time));
+    const futureIds = new Set(future.map((booking) => booking.id));
+    const past = list.filter((booking) => !futureIds.has(booking.id)).sort((a, b) => +bookingDate(b.date, b.time) - +bookingDate(a.date, a.time));
+    return { future, past };
   }, [filter, query.data, search]);
 
   return <>
@@ -34,7 +38,10 @@ export function BookingsList() {
     <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-2">{filters.map(([value, label]) => <button key={value} onClick={() => setFilter(value)} className={`relative min-h-10 shrink-0 overflow-hidden rounded-full px-4 text-xs font-medium ${filter === value ? "text-zinc-950" : "bg-white/[.035] text-zinc-400"}`}>{filter === value && <motion.span layoutId="booking-filter" className="absolute inset-0 bg-amber-300" />}<span className="relative">{label}</span></button>)}</div>
     {notice && <p role="status" className="mt-4 rounded-2xl bg-emerald-400/10 p-3 text-sm text-emerald-200">{notice}</p>}
     {cancel.isError && <p role="alert" className="mt-4 rounded-2xl bg-red-400/10 p-3 text-sm text-red-200">{apiErrorMessage(cancel.error)}</p>}
-    {query.isPending ? <div className="mt-5 space-y-3"><Skeleton className="h-44" /><Skeleton className="h-44" /></div> : query.isError ? <div className="mt-5"><ErrorState message={apiErrorMessage(query.error)} retry={() => query.refetch()} /></div> : !data.future.length && !data.past.length ? <div className="mt-5"><EmptyState title="Nessuna prenotazione" description="Non risultano appuntamenti per questi filtri. Prova ad aggiornare oppure prenota ora." /></div> : <div className="mt-7 space-y-8">{!!data.future.length && <section><div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">In programma</h2><span className="text-xs text-zinc-500">{data.future.length}</span></div><div className="space-y-3">{data.future.map((booking, index) => <motion.div key={booking.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }}><BookingCard booking={booking} canceling={cancel.isPending && cancel.variables === booking.id} onCancel={() => { if (window.confirm("Vuoi annullare questa prenotazione? Lo slot verrà liberato.")) cancel.mutate(booking.id); }} /></motion.div>)}</div></section>}{!!data.past.length && <section><h2 className="mb-3 font-semibold text-zinc-400">Storico</h2><div className="space-y-3">{data.past.map((booking) => <BookingCard key={booking.id} booking={booking} />)}</div></section>}</div>}
+    {query.isPending ? <div className="mt-5 space-y-3"><Skeleton className="h-44" /><Skeleton className="h-44" /></div> : query.isError ? <div className="mt-5"><ErrorState message={apiErrorMessage(query.error)} retry={() => query.refetch()} /></div> : !data.future.length && !data.past.length ? <div className="mt-5"><EmptyState title="Nessuna prenotazione" description="Non risultano appuntamenti per questo filtro. Prova ad aggiornare oppure scegli un'altra sezione." /></div> : <div className="mt-7 space-y-8">
+      {!!data.future.length && <section><div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">Prossimo appuntamento</h2><span className="text-xs text-zinc-500">{data.future.length > 1 ? `+${data.future.length - 1} in programma` : "Il prossimo"}</span></div><div className="space-y-3">{data.future.map((booking, index) => <motion.div key={booking.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }} className={index === 0 ? "rounded-[1.6rem] ring-1 ring-amber-300/25" : ""}><BookingCard booking={booking} canceling={cancel.isPending && cancel.variables === booking.id} onCancel={() => { if (window.confirm("Vuoi annullare questa prenotazione? Lo slot verrà liberato.")) cancel.mutate(booking.id); }} /></motion.div>)}</div></section>}
+      {!!data.past.length && <section><h2 className="mb-3 font-semibold text-zinc-400">{filter === "confirmed" ? "Confermate precedenti" : "Storico"}</h2><div className="space-y-3">{data.past.map((booking) => <BookingCard key={booking.id} booking={booking} />)}</div></section>}
+    </div>}
   </>;
 }
 
