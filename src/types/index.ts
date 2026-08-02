@@ -57,25 +57,49 @@ export interface Product {
 
 export interface Reward {
   id: Id;
-  name?: string;
-  title?: string;
-  description?: string;
-  points?: number;
-  points_required?: number;
-  available?: boolean;
-  redeemed?: boolean;
+  title: string;
+  description?: string | null;
+  points_cost: number;
+  status: "available" | "redeemed" | "expired" | string;
+  code: string;
+  service?: string | null;
+  earned_at?: string | null;
+  expires_at?: string | null;
+}
+
+export interface LoyaltyTransaction {
+  id: Id;
+  points: number;
+  type: "earned" | "redeemed" | "adjustment" | string;
+  description?: string | null;
+  service?: string | null;
+  created_at?: string | null;
+}
+
+export interface LoyaltyRule {
+  id: Id;
+  name: string;
+  type: "points_threshold" | "service_count" | string;
+  service?: string | null;
+  reward_title: string;
+  reward_description?: string | null;
+  current: number;
+  target: number;
+  progress: number;
 }
 
 export interface LoyaltySummary {
-  points?: number;
-  balance?: number;
-  points_balance?: number;
-  level?: string;
-  rewards?: Reward[];
-  movements?: Array<Record<string, unknown>>;
-  transactions?: Array<Record<string, unknown>>;
-  rules?: unknown;
+  balance: number;
+  lifetime_points: number;
+  available_rewards_count: number;
+  next_reward?: { name: string; points_required: number; points_missing: number; progress: number } | null;
+  rewards: Reward[];
+  transactions: LoyaltyTransaction[];
+  rules: LoyaltyRule[];
 }
+
+export interface LoyaltyResponse { status: boolean; loyalty: LoyaltySummary }
+export interface RedeemRewardResponse { status: boolean; message?: string; reward: { id: Id; title: string; status: string; code: string; redeemed_at?: string | null } }
 
 export interface AppConfig {
   name?: string;

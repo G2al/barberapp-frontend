@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, Camera, ChevronDown, LockKeyhole, LogOut, Phone, Save, UserRound } from "lucide-react";
+import { Bell, Camera, ChevronDown, LockKeyhole, LogOut, Mail, Phone, Save, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, type FieldValues, type Path, type UseFormSetError } from "react-hook-form";
 import { z } from "zod";
@@ -58,16 +58,19 @@ export function ProfilePage() {
     {notice && <p role="status" className="mb-3 rounded-2xl bg-emerald-400/10 p-3 text-sm text-emerald-200">{notice}</p>}
     {failure && <p role="alert" className="mb-3 rounded-2xl bg-red-400/10 p-3 text-sm text-red-200">{failure}</p>}
 
-    <section className="flex items-center gap-4 rounded-[1.6rem] border border-white/8 bg-card p-4 shadow-lg">
-      <label className="relative block size-20 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 border-amber-300/35" aria-label="Cambia immagine profilo">
-        <AppImage src={preview ?? user?.avatar_url ?? user?.avatar} alt={`Avatar di ${user?.name ?? "utente"}`} sizes="80px" />
-        <span className="absolute bottom-0 right-0 z-10 grid size-7 place-items-center rounded-full bg-amber-300 text-zinc-950 shadow-lg"><Camera className="size-3.5" /></span>
+    <section className="rounded-[1.75rem] border border-white/8 bg-card px-5 py-6 text-center shadow-lg">
+      <label className="relative mx-auto block size-24 cursor-pointer overflow-hidden rounded-full border-2 border-amber-300/40 shadow-[0_10px_35px_rgba(0,0,0,.35)]" aria-label="Cambia immagine profilo">
+        <AppImage src={preview ?? user?.avatar_url ?? user?.avatar} alt={`Avatar di ${user?.name ?? "utente"}`} sizes="96px" />
+        <span className="absolute bottom-0 right-0 z-10 grid size-8 place-items-center rounded-full bg-amber-300 text-zinc-950 shadow-lg"><Camera className="size-4" /></span>
         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={avatar.isPending} onChange={(event) => selectAvatar(event.target.files?.[0])} />
       </label>
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-xl font-semibold tracking-tight">{fullName(user) || user?.name}</h1>
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-400"><Phone className="size-3.5" />{user?.phone || "Telefono non inserito"}</p>
-        <p className="mt-1 truncate text-xs text-zinc-600">{avatar.isPending ? "Caricamento immagine…" : user?.email}</p>
+      <div className="mt-4 min-w-0">
+        <h1 className="truncate text-2xl font-semibold tracking-tight">{fullName(user) || user?.name}</h1>
+        <div className="mt-3 flex flex-col items-center gap-1.5 text-sm text-zinc-400">
+          <p className="flex items-center gap-2"><Phone className="size-3.5 text-amber-300/70" />{user?.phone || "Telefono non inserito"}</p>
+          <p className="flex max-w-full items-center gap-2"><Mail className="size-3.5 shrink-0 text-amber-300/70" /><span className="truncate">{user?.email}</span></p>
+        </div>
+        {avatar.isPending && <p className="mt-2 text-xs text-amber-200/70">Caricamento immagine…</p>}
       </div>
     </section>
 

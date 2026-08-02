@@ -15,12 +15,11 @@ import { Card, ErrorState, PageTitle, Skeleton } from "@/components/ui/primitive
 export function HomeDashboard() {
   const { user } = useAuth();
   const bookings = useQuery({ queryKey: queryKeys.bookings, queryFn: endpoints.bookings, refetchOnMount: "always" });
-  const loyalty = useQuery({ queryKey: queryKeys.loyalty, queryFn: endpoints.loyalty });
+  const loyalty = useQuery({ queryKey: queryKeys.loyalty, queryFn: endpoints.loyalty, refetchOnMount: "always" });
   const config = useQuery({ queryKey: queryKeys.config, queryFn: endpoints.config });
   const now = new Date();
   const next = bookings.data?.bookings.filter((booking) => ["pending", "confirmed"].includes(booking.status) && bookingDate(booking.date, booking.time) >= now).sort((first, second) => +bookingDate(first.date, first.time) - +bookingDate(second.date, second.time))[0];
-  const loyaltyData = loyalty.data && ("summary" in loyalty.data ? loyalty.data.summary : loyalty.data);
-  const points = loyaltyData?.points_balance ?? loyaltyData?.balance ?? loyaltyData?.points;
+  const points = loyalty.data?.balance;
 
   return <>
     <PageTitle eyebrow="Il tuo barber" title={`Ciao, ${user?.name ?? ""}`} description="Il prossimo taglio è a portata di tap." />
