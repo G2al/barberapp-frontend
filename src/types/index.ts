@@ -50,6 +50,7 @@ export interface Product {
   category?: string | null;
   description?: string | null;
   price?: number | string | null;
+  image?: string | null;
   image_url?: string | null;
   is_favorite?: boolean;
 }

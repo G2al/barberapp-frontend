@@ -13,3 +13,24 @@ export function imageUrl(value?: string | null) {
   if (/^https?:\/\//i.test(value) || value.startsWith("data:") || value.startsWith("blob:")) return value;
   return `${API_URL}/${value.replace(/^\//, "")}`;
 }
+
+export function imageCandidates(value?: string | null) {
+  const primary = imageUrl(value);
+  if (primary.startsWith("/") || primary.startsWith("data:") || primary.startsWith("blob:")) return [primary];
+
+  try {
+    const url = new URL(primary);
+    const mediaOrigin = new URL(API_URL).origin;
+    if (url.origin !== mediaOrigin || url.pathname.startsWith("/storage/")) return [primary];
+
+    const storageUrl = new URL(`/storage${url.pathname}`, url.origin);
+    storageUrl.search = url.search;
+    // Gli avatar del backend sono pubblicati sotto /storage/user-avatars,
+    // anche quando l'API restituisce erroneamente /user-avatars.
+    return url.pathname.startsWith("/user-avatars/")
+      ? [storageUrl.toString(), primary]
+      : [primary, storageUrl.toString()];
+  } catch {
+    return [primary];
+  }
+}
