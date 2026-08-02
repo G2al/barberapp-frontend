@@ -1,6 +1,6 @@
 import { authStorage } from "@/lib/auth/storage";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://gaetabet.it/api").replace(/\/$/, "");
 
 export class ApiError<T = unknown> extends Error {
   constructor(public status: number, public payload: T, message: string) { super(message); this.name = "ApiError"; }
@@ -31,7 +31,10 @@ export async function api<T>(endpoint: string, options: Options = {}): Promise<T
   let response: Response;
   try {
     response = await fetch(endpointUrl(endpoint), { method: options.method ?? "GET", headers, body: requestBody, signal: options.signal });
-  } catch (cause) { throw new ApiError(0, cause, "Impossibile contattare il server. Controlla la connessione."); }
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause;
+    throw new ApiError(0, cause, "Impossibile contattare il server. Controlla la connessione.");
+  }
   const text = await response.text();
   let payload: unknown = null;
   if (text) { try { payload = JSON.parse(text); } catch { payload = text; } }
