@@ -1,6 +1,27 @@
 import { api } from "./client";
 import type { AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, LoyaltySummary, Product, ProductsResponse, PushConfig, Service, Staff, User } from "@/types";
 
+type RawBooking = Omit<Booking, "staff" | "service"> & {
+  staff?: Booking["staff"] | string;
+  service?: Booking["service"] | string;
+  staff_image?: string | null;
+  staff_phone?: string | null;
+  service_duration?: number | string | null;
+  service_price?: number | string | null;
+};
+
+function normalizeBooking(booking: RawBooking): Booking {
+  const staff = typeof booking.staff === "string"
+    ? { id: booking.staff_id ?? `staff-${booking.id}`, first_name: booking.staff, phone: booking.staff_phone, image_url: booking.staff_image }
+    : booking.staff;
+  const service = typeof booking.service === "string"
+    ? { id: booking.service_id ?? `service-${booking.id}`, name: booking.service, duration: Number(booking.service_duration ?? 0), price: booking.service_price }
+    : booking.service;
+  return { ...booking, date: String(booking.date).slice(0, 10), time: String(booking.time).slice(0, 5), staff, service, phone: booking.phone ?? booking.staff_phone };
+}
+
+function normalizeBookings(bookings: RawBooking[]) { return bookings.map(normalizeBooking); }
+
 export const endpoints = {
   login: (body: { email: string; password: string }) => api<AuthResponse>("/auth/login", { method: "POST", body, auth: false }),
   register: (body: { name: string; surname: string; email: string; phone: string; password: string }) => api<AuthResponse>("/auth/register", { method: "POST", body, auth: false }),
@@ -16,10 +37,13 @@ export const endpoints = {
   servicesByStaff: (id: string | number) => api<Service[]>(`/services/by-staff/${id}`, { auth: false }),
   availability: (staff: string | number, date: string, service: string | number) => api<AvailabilityResponse>(`/availability/${staff}?date=${encodeURIComponent(date)}&serviceId=${encodeURIComponent(service)}`, { auth: false }),
   bookings: async () => {
-    const response = await api<BookingsResponse | Booking[] | { bookings: { data?: Booking[] } } | { data?: Booking[] }>("/bookings");
-    if (Array.isArray(response)) return { bookings: response } satisfies BookingsResponse;
-    if ("bookings" in response) return { ...response, bookings: Array.isArray(response.bookings) ? response.bookings : response.bookings?.data ?? [] } satisfies BookingsResponse;
-    return { bookings: response.data ?? [] } satisfies BookingsResponse;
+    const response = await api<BookingsResponse | RawBooking[] | { bookings: { data?: RawBooking[] } | RawBooking[] } | { data?: RawBooking[] }>("/bookings");
+    if (Array.isArray(response)) return { bookings: normalizeBookings(response) } satisfies BookingsResponse;
+    if ("bookings" in response) {
+      const items = Array.isArray(response.bookings) ? response.bookings : response.bookings?.data ?? [];
+      return { ...response, bookings: normalizeBookings(items) } satisfies BookingsResponse;
+    }
+    return { bookings: normalizeBookings(response.data ?? []) } satisfies BookingsResponse;
   },
   createBooking: (body: { staff_id: string | number; service_id: string | number; date: string; time: string }) => api<{ status?: boolean; booking?: Booking; message?: string }>("/bookings", { method: "POST", body }),
   cancelBooking: (id: string | number) => api<{ status?: boolean; message?: string }>(`/bookings/${id}/cancel`, { method: "POST" }),
