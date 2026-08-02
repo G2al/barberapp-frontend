@@ -1,0 +1,5 @@
+import { create } from "zustand"; import type { Service, Staff } from "@/types";
+export type BookingState = { step: number; staff: Staff | null; service: Service | null; date: string; slot: string; setStaff: (v: Staff) => void; setService: (v: Service) => void; setDate: (v: string) => void; setSlot: (v: string) => void; setStep: (v: number) => void; reset: () => void };
+const initial = { step: 1, staff: null, service: null, date: "", slot: "" };
+const localDate = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
+export const useBookingStore = create<BookingState>((set) => ({ ...initial, setStaff: staff => set({ staff, service: null, date: "", slot: "", step: 2 }), setService: service => set({ service, date: localDate(), slot: "", step: 3 }), setDate: date => set({ date, slot: "", step: 3 }), setSlot: slot => set({ slot, step: 4 }), setStep: step => set({ step }), reset: () => set(initial) }));
