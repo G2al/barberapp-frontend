@@ -29,8 +29,8 @@ export function HomeDashboard() {
     : loyalty.data?.available_rewards_count
       ? "Hai un premio disponibile"
       : "Verso il prossimo premio";
-  const shopPhone = config.data?.phone?.trim() ?? "";
-  const shopAddress = config.data?.address?.trim() ?? "";
+  const shopPhone = config.data?.phone?.trim() || "+39 324 099 4144";
+  const shopAddress = config.data?.location?.trim() || config.data?.address?.trim() || "";
   const whatsappPhone = shopPhone.replace(/\D/g, "");
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent("Ciao Lama, vorrei ricevere alcune informazioni.")}` : "";
   const mapsUrl = shopAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopAddress)}` : "";
@@ -79,6 +79,19 @@ export function HomeDashboard() {
       </div>
 
       {shopAddress && <a href={mapsUrl} target="_blank" rel="noreferrer" className="mx-5 flex items-center gap-3 rounded-2xl bg-white/[.035] p-3 text-sm text-zinc-400 transition hover:bg-white/[.06] hover:text-white"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-300/10 text-amber-300"><MapPin className="size-4" /></span><span className="min-w-0 flex-1">{shopAddress}</span><ArrowRight className="size-4 shrink-0 text-zinc-600" /></a>}
+
+      <div className="mx-5 mt-4 h-44 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">
+        <iframe
+          title="Mappa Lama Barber"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1542226.491973595!2d11.762587356249993!3d40.9779527!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x133b01679e28d14f%3A0x1c82a951803a9cb!2sMottola's%20Family!5e0!3m2!1sit!2sit!4v1785747279876!5m2!1sit!2sit"
+          width="600"
+          height="450"
+          className="h-full w-full border-0"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
 
       {(shopPhone || shopAddress) && <div className={`mt-4 grid gap-px border-t border-white/8 bg-white/8 ${shopPhone && shopAddress ? "grid-cols-3" : shopPhone ? "grid-cols-2" : "grid-cols-1"}`}>
         {shopPhone && <a href={`tel:${shopPhone}`} className="flex min-h-16 flex-col items-center justify-center gap-1.5 bg-card px-2 text-xs font-medium transition hover:bg-white/[.035]"><Phone className="size-4 text-amber-300" />Chiama</a>}

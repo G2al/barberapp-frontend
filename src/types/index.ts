@@ -106,6 +106,7 @@ export interface AppConfig {
   shop_name?: string;
   phone?: string;
   address?: string;
+  location?: string;
   opening_hours?: unknown;
   [key: string]: unknown;
 }
