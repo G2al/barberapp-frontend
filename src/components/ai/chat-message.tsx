@@ -1,4 +1,5 @@
 import { AlertCircle, Bot, UserRound } from "lucide-react";
+import { AppImage } from "@/components/ui/app-image";
 
 export type ChatMessageData = {
   id: number;
@@ -6,7 +7,7 @@ export type ChatMessageData = {
   text: string;
 };
 
-export function ChatMessage({ message }: { message: ChatMessageData }) {
+export function ChatMessage({ message, userAvatar, userName }: { message: ChatMessageData; userAvatar?: string | null; userName?: string }) {
   const user = message.role === "user";
   const error = message.role === "error";
 
@@ -20,7 +21,13 @@ export function ChatMessage({ message }: { message: ChatMessageData }) {
       <div className={`max-w-[82%] rounded-[1.35rem] px-4 py-3 text-sm leading-6 ${user ? "rounded-br-md bg-amber-300 text-zinc-950" : error ? "rounded-bl-md border border-red-300/15 bg-red-400/[.07] text-red-100" : "rounded-bl-md bg-white/[.055] text-zinc-200"}`}>
         <p className="whitespace-pre-wrap break-words">{message.text}</p>
       </div>
-      {user && <span className="grid size-8 shrink-0 place-items-center rounded-full bg-amber-300 text-zinc-950" aria-hidden><UserRound className="size-4" /></span>}
+      {user && (
+        <span className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-full border border-amber-300/35 bg-amber-300 text-zinc-950">
+          {userAvatar
+            ? <AppImage src={userAvatar} alt={`Foto profilo di ${userName || "utente"}`} sizes="32px" className="object-cover" />
+            : <UserRound className="size-4" aria-hidden />}
+        </span>
+      )}
     </article>
   );
 }
