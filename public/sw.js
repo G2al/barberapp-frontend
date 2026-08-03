@@ -8,7 +8,7 @@ self.addEventListener("push", (event) => {
   const tag = data.tag ?? (data.booking_id ? `booking-${data.booking_id}` : "lama-update");
   event.waitUntil(self.registration.showNotification(data.title ?? "Lama", {
     body: data.body ?? "Hai un nuovo aggiornamento.",
-    icon: "/lama-logo-white.png",
+    icon: "/lama-logo-original.png",
     tag,
     renotify: true,
     timestamp: data.timestamp ? new Date(data.timestamp).getTime() : Date.now(),
