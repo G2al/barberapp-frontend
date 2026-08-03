@@ -11,6 +11,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker";
 import { PushControls } from "@/components/profile/push-panel";
 import { FavoritesMenu } from "@/components/products/favorites-menu";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 const items = [
   { href: "/home", label: "Home", icon: Home },
@@ -43,13 +44,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     try { await logout(); } catch { setLoggingOut(false); }
   }
 
-  if (loading || !user) return <main className="grid min-h-dvh place-items-center"><div className="size-9 animate-spin rounded-full border-2 border-amber-300 border-t-transparent" /><span className="sr-only">Verifica sessione</span></main>;
+  if (loading || !user) return <BrandLoader label="Prepariamo la tua esperienza" />;
 
   return <div className="mx-auto min-h-dvh w-full max-w-2xl bg-zinc-950/30 shadow-2xl">
     <ServiceWorkerRegistration />
     <header className="sticky top-0 z-30 bg-zinc-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
       <div className="flex h-[4.25rem] items-center justify-between gap-3 px-5">
-        <Link href="/home" aria-label="Lama, vai alla home" className="relative h-10 w-[6.5rem] shrink-0 overflow-hidden"><Image src="/lama-logo.png" alt="Lama Barber App" fill sizes="104px" className="scale-[1.65] object-contain brightness-125 contrast-110" /></Link>
+        <Link href="/home" aria-label="Lama, vai alla home" className="relative h-11 w-[7.25rem] shrink-0 overflow-hidden"><Image src="/lama-logo.png" alt="Lama Barber App" fill sizes="116px" className="scale-[1.65] object-contain drop-shadow-[0_5px_14px_rgba(200,164,91,.12)]" /></Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <FavoritesMenu open={favoritesOpen} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(true); }} onClose={() => setFavoritesOpen(false)} />
           <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label="Attiva o disattiva notifiche" aria-haspopup="dialog" className="grid size-10 place-items-center rounded-full bg-white/[.055] text-zinc-200 shadow-lg transition hover:bg-white/10"><Bell className="size-[1.15rem]" /></button>

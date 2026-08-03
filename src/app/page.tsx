@@ -1,3 +1,7 @@
 "use client";
-import { useEffect } from "react"; import { useRouter } from "next/navigation"; import { useAuth } from "@/providers/auth-provider";
-export default function Page() { const { user, loading } = useAuth(); const router = useRouter(); useEffect(() => { if (!loading) router.replace(user ? "/home" : "/login"); }, [loading, router, user]); return <main className="grid min-h-dvh place-items-center"><div className="text-center"><div className="mx-auto size-9 animate-spin rounded-full border-2 border-amber-300 border-t-transparent"/><p className="mt-4 text-sm text-zinc-400">Apertura Lama…</p></div></main>; }
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/auth-provider";
+import { BrandLoader } from "@/components/ui/brand-loader";
+
+export default function Page() { const { user, loading } = useAuth(); const router = useRouter(); useEffect(() => { if (!loading) router.replace(user ? "/home" : "/login"); }, [loading, router, user]); return <BrandLoader />; }

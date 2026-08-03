@@ -1,4 +1,5 @@
 import { api, ApiError } from "./client";
+import { normalizeBookingDate } from "@/lib/format";
 import type { AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, LoyaltyResponse, Product, ProductsResponse, PushConfig, RedeemRewardResponse, Service, Staff, User } from "@/types";
 
 type RawBooking = Omit<Booking, "staff" | "service"> & {
@@ -17,7 +18,7 @@ function normalizeBooking(booking: RawBooking): Booking {
   const service = typeof booking.service === "string"
     ? { id: booking.service_id ?? `service-${booking.id}`, name: booking.service, duration: Number(booking.service_duration ?? 0), price: booking.service_price }
     : booking.service;
-  return { ...booking, date: String(booking.date).slice(0, 10), time: String(booking.time).slice(0, 5), staff, service, phone: booking.phone ?? booking.staff_phone };
+  return { ...booking, date: normalizeBookingDate(String(booking.date)), time: String(booking.time).slice(0, 5), staff, service, phone: booking.phone ?? booking.staff_phone };
 }
 
 function normalizeBookings(bookings: RawBooking[]) { return bookings.map(normalizeBooking); }
@@ -45,7 +46,10 @@ export const endpoints = {
     }
     return { bookings: normalizeBookings(response.data ?? []) } satisfies BookingsResponse;
   },
-  createBooking: (body: { staff_id: string | number; service_id: string | number; date: string; time: string }) => api<{ status?: boolean; booking?: Booking; message?: string }>("/bookings", { method: "POST", body }),
+  createBooking: async (body: { staff_id: string | number; service_id: string | number; date: string; time: string }) => {
+    const response = await api<{ status?: boolean; booking?: RawBooking; message?: string }>("/bookings", { method: "POST", body });
+    return { ...response, booking: response.booking ? normalizeBooking(response.booking) : undefined };
+  },
   cancelBooking: (id: string | number) => api<{ status?: boolean; message?: string }>(`/bookings/${id}/cancel`, { method: "POST" }),
   products: () => api<ProductsResponse>("/products"),
   favorites: () => api<Product[] | ProductsResponse | { favorites: Product[] }>("/favorites"),
