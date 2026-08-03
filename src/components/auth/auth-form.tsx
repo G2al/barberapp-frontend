@@ -28,6 +28,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [show, setShow] = useState(false); const [serverError, setServerError] = useState(""); const [success, setSuccess] = useState("");
   const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<Values>({ resolver: zodResolver(schemas[mode]) as Resolver<Values> });
   const missingResetData = mode === "reset" && (!params.get("token") || !params.get("email"));
+  const compact = mode === "register";
   async function submit(values: Values) {
     setServerError(""); setSuccess("");
     try {
@@ -43,18 +44,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
     }
   }
   if (missingResetData) return <div role="alert" className="rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">Il link non è valido: token o email mancanti. Richiedi una nuova email di recupero.</div>;
-  return <form onSubmit={handleSubmit(submit)} className="space-y-4" noValidate>
-    {mode === "register" && <div className="grid grid-cols-2 gap-3"><FormField label="Nome" name="name" register={register} error={errors.name?.message} autoComplete="given-name" /><FormField label="Cognome" name="surname" register={register} error={errors.surname?.message} autoComplete="family-name" /></div>}
-    {mode !== "reset" && <FormField label="Email" name="email" type="email" register={register} error={errors.email?.message} autoComplete="email" />}
-    {mode === "register" && <FormField label="Telefono" name="phone" type="tel" register={register} error={errors.phone?.message} autoComplete="tel" />}
-    {(mode === "login" || mode === "register" || mode === "reset") && <div><Label htmlFor="password">{mode === "reset" ? "Nuova password" : "Password"}</Label><div className="relative"><Input id="password" type={show ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} aria-invalid={!!errors.password} {...register("password")} /><button type="button" aria-label={show ? "Nascondi password" : "Mostra password"} onClick={() => setShow(!show)} className="absolute right-1 top-1 grid size-10 place-items-center rounded-xl text-zinc-400">{show ? <EyeOff /> : <Eye />}</button></div><FieldError>{errors.password?.message}</FieldError></div>}
-    {(mode === "register" || mode === "reset") && <FormField label="Conferma password" name="password_confirmation" type={show ? "text" : "password"} register={register} error={errors.password_confirmation?.message} autoComplete="new-password" />}
+  return <form onSubmit={handleSubmit(submit)} className={compact ? "space-y-2.5" : "space-y-4"} noValidate>
+    {mode === "register" && <div className="grid grid-cols-2 gap-2"><FormField compact label="Nome" name="name" register={register} error={errors.name?.message} autoComplete="given-name" /><FormField compact label="Cognome" name="surname" register={register} error={errors.surname?.message} autoComplete="family-name" /></div>}
+    {mode !== "reset" && <FormField compact={compact} label="Email" name="email" type="email" register={register} error={errors.email?.message} autoComplete="email" />}
+    {mode === "register" && <FormField compact label="Telefono" name="phone" type="tel" register={register} error={errors.phone?.message} autoComplete="tel" />}
+    {(mode === "login" || mode === "register" || mode === "reset") && <div><Label htmlFor="password" className={compact ? "mb-1 text-xs" : undefined}>{mode === "reset" ? "Nuova password" : "Password"}</Label><div className="relative"><Input id="password" className={compact ? "h-10 rounded-xl px-3 pr-11" : undefined} type={show ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} aria-invalid={!!errors.password} {...register("password")} /><button type="button" aria-label={show ? "Nascondi password" : "Mostra password"} onClick={() => setShow(!show)} className="absolute right-0 top-0 grid size-10 place-items-center rounded-xl text-zinc-400">{show ? <EyeOff /> : <Eye />}</button></div><FieldError>{errors.password?.message}</FieldError></div>}
+    {(mode === "register" || mode === "reset") && <FormField compact={compact} label="Conferma password" name="password_confirmation" type={show ? "text" : "password"} register={register} error={errors.password_confirmation?.message} autoComplete="new-password" />}
     {serverError && <p role="alert" className="rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{serverError}</p>}
     {success && <p role="status" className="rounded-xl bg-emerald-400/10 p-3 text-sm text-emerald-200">{success}</p>}
-    <SubmitButton pending={isSubmitting}>{mode === "login" ? "Accedi" : mode === "register" ? "Crea account" : mode === "forgot" ? "Invia istruzioni" : "Aggiorna password"}</SubmitButton>
+    <SubmitButton pending={isSubmitting} className={compact ? "h-10 rounded-xl" : undefined}>{mode === "login" ? "Accedi" : mode === "register" ? "Crea account" : mode === "forgot" ? "Invia istruzioni" : "Aggiorna password"}</SubmitButton>
     {mode === "login" && <div className="flex justify-between text-sm"><Link href="/password-dimenticata" className="text-zinc-400 hover:text-white">Password dimenticata?</Link><Link href="/registrazione" className="font-medium text-amber-300">Registrati</Link></div>}
-    {mode !== "login" && <p className="text-center text-sm text-zinc-400"><Link href="/login" className="font-medium text-amber-300">Torna al login</Link></p>}
+    {mode !== "login" && <p className={`text-center text-zinc-400 ${compact ? "text-xs" : "text-sm"}`}><Link href="/login" className="font-medium text-amber-300">Torna al login</Link></p>}
   </form>;
 }
 
-function FormField({ label, name, register, error, ...props }: { label: string; name: keyof Values; register: ReturnType<typeof useForm<Values>>["register"]; error?: string } & React.ComponentProps<"input">) { return <div><Label htmlFor={name}>{label}</Label><Input id={name} aria-invalid={!!error} {...props} {...register(name)} /><FieldError>{error}</FieldError></div>; }
+function FormField({ compact = false, label, name, register, error, ...props }: { compact?: boolean; label: string; name: keyof Values; register: ReturnType<typeof useForm<Values>>["register"]; error?: string } & React.ComponentProps<"input">) { return <div><Label htmlFor={name} className={compact ? "mb-1 text-xs" : undefined}>{label}</Label><Input id={name} className={compact ? "h-10 rounded-xl px-3" : undefined} aria-invalid={!!error} {...props} {...register(name)} /><FieldError>{error}</FieldError></div>; }
