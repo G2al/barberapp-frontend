@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, Camera, ChevronDown, LockKeyhole, LogOut, Mail, Phone, Save, UserRound } from "lucide-react";
+import { Bell, Camera, ChevronDown, LockKeyhole, Mail, Phone, Save, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, type FieldValues, type Path, type UseFormSetError } from "react-hook-form";
 import { z } from "zod";
@@ -13,7 +13,6 @@ import { fullName, normalizePhone } from "@/lib/format";
 import { useAuth } from "@/providers/auth-provider";
 import type { User } from "@/types";
 import { AppImage } from "@/components/ui/app-image";
-import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label } from "@/components/ui/primitives";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { LoyaltyPanel } from "./loyalty-panel";
@@ -28,8 +27,7 @@ type Section = "profile" | "password" | "notifications";
 const unwrap = (data: User | { user: User }) => "user" in data ? data.user : data;
 
 export function ProfilePage() {
-  const { user, refreshUser, logout } = useAuth();
-  const queryClient = useQueryClient();
+  const { user, refreshUser } = useAuth();
   const [openSection, setOpenSection] = useState<Section | null>(null);
   const [notice, setNotice] = useState("");
   const [failure, setFailure] = useState("");
@@ -59,9 +57,9 @@ export function ProfilePage() {
     {failure && <p role="alert" className="mb-3 rounded-2xl bg-red-400/10 p-3 text-sm text-red-200">{failure}</p>}
 
     <section className="rounded-[1.75rem] border border-white/8 bg-card px-5 py-6 text-center shadow-lg">
-      <label className="relative mx-auto block size-24 cursor-pointer overflow-hidden rounded-full border-2 border-amber-300/40 shadow-[0_10px_35px_rgba(0,0,0,.35)]" aria-label="Cambia immagine profilo">
-        <AppImage src={preview ?? user?.avatar_url ?? user?.avatar} alt={`Avatar di ${user?.name ?? "utente"}`} sizes="96px" />
-        <span className="absolute bottom-0 right-0 z-10 grid size-8 place-items-center rounded-full bg-amber-300 text-zinc-950 shadow-lg"><Camera className="size-4" /></span>
+      <label className="relative mx-auto block size-24 cursor-pointer" aria-label="Cambia immagine profilo">
+        <span className="relative block size-full overflow-hidden rounded-full border-2 border-amber-300/40 shadow-[0_10px_35px_rgba(0,0,0,.35)]"><AppImage src={preview ?? user?.avatar_url ?? user?.avatar} alt={`Avatar di ${user?.name ?? "utente"}`} sizes="96px" /></span>
+        <span className="absolute -bottom-1 -right-1 z-10 grid size-9 place-items-center rounded-full border-4 border-card bg-amber-300 text-zinc-950 shadow-lg"><Camera className="size-4" /></span>
         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={avatar.isPending} onChange={(event) => selectAvatar(event.target.files?.[0])} />
       </label>
       <div className="mt-4 min-w-0">
@@ -86,7 +84,6 @@ export function ProfilePage() {
       <div id="notifiche" className="scroll-mt-20"><ProfileSection id="notifications" title="Notifiche" description="Conferme e promemoria" icon={<Bell />} open={openSection === "notifications"} onToggle={() => setOpenSection(openSection === "notifications" ? null : "notifications")}><PushControls /></ProfileSection></div>
     </div>
 
-    <Button variant="destructive" onClick={() => { if (window.confirm("Vuoi uscire dal tuo account?")) { queryClient.clear(); void logout(); } }} className="mt-4 h-12 w-full rounded-2xl"><LogOut />Esci dall’account</Button>
   </>;
 }
 

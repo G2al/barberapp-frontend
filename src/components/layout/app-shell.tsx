@@ -1,13 +1,15 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, CalendarDays, Home, Package, Scissors, UserRound, X } from "lucide-react";
+import { Bell, CalendarDays, Home, LogOut, Package, Scissors, UserRound, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/providers/auth-provider";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker";
 import { PushControls } from "@/components/profile/push-panel";
+import { FavoritesMenu } from "@/components/products/favorites-menu";
 
 const items = [
   { href: "/home", label: "Home", icon: Home },
@@ -18,10 +20,13 @@ const items = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   useEffect(() => { if (!loading && !user) router.replace("/login"); }, [loading, router, user]);
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -30,14 +35,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", close);
   }, [notificationsOpen]);
 
+  async function handleLogout() {
+    if (!window.confirm("Vuoi uscire dal tuo account?")) return;
+    setLoggingOut(true);
+    queryClient.clear();
+    try { await logout(); } catch { setLoggingOut(false); }
+  }
+
   if (loading || !user) return <main className="grid min-h-dvh place-items-center"><div className="size-9 animate-spin rounded-full border-2 border-amber-300 border-t-transparent" /><span className="sr-only">Verifica sessione</span></main>;
 
   return <div className="mx-auto min-h-dvh w-full max-w-2xl bg-zinc-950/30 shadow-2xl">
     <ServiceWorkerRegistration />
     <header className="sticky top-0 z-30 bg-zinc-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
-      <div className="flex h-[4.25rem] items-center justify-between px-5">
-        <Link href="/home" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"><Scissors className="size-5 text-amber-300" />BarberApp</Link>
-        <button onClick={() => setNotificationsOpen(true)} aria-label="Attiva o disattiva notifiche" aria-haspopup="dialog" className="grid size-11 place-items-center rounded-full bg-white/[.055] text-zinc-200 shadow-lg transition hover:bg-white/10"><Bell className="size-5" /></button>
+      <div className="flex h-[4.25rem] items-center justify-between gap-3 px-5">
+        <Link href="/home" className="flex min-w-0 items-center gap-2 text-base font-semibold tracking-tight sm:text-lg"><Scissors className="size-5 shrink-0 text-amber-300" /><span className="truncate">BarberApp</span></Link>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <FavoritesMenu open={favoritesOpen} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(true); }} onClose={() => setFavoritesOpen(false)} />
+          <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label="Attiva o disattiva notifiche" aria-haspopup="dialog" className="grid size-10 place-items-center rounded-full bg-white/[.055] text-zinc-200 shadow-lg transition hover:bg-white/10"><Bell className="size-[1.15rem]" /></button>
+          <button onClick={() => void handleLogout()} disabled={loggingOut} aria-label="Esci dall’account" className="grid size-10 place-items-center rounded-full bg-red-400/[.07] text-red-300 shadow-lg transition hover:bg-red-400/15 disabled:opacity-50"><LogOut className="size-[1.15rem]" /></button>
+        </div>
       </div>
     </header>
     <main className="px-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-5">
