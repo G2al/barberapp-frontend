@@ -119,6 +119,37 @@ export interface PushConfig { enabled: boolean; public_key?: string }
 
 export interface AiChatRequest {
   message: string;
+  history: AiChatHistoryMessage[];
+}
+
+export interface AiChatHistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface AiBookingPayload {
+  staff_id: Id;
+  service_id: Id;
+  date: string;
+  time: string;
+}
+
+export interface AiBookingSummary {
+  service: string;
+  staff: string;
+  date: string;
+  time: string;
+  duration_minutes: number;
+  price_eur: string;
+}
+
+export interface AiConfirmBookingAction {
+  type: "confirm_booking";
+  label: string;
+  method: "POST";
+  url: string;
+  payload: AiBookingPayload;
+  summary: AiBookingSummary;
 }
 
 export interface AiChatUsage {
@@ -132,4 +163,5 @@ export interface AiChatResponse {
   status: boolean;
   answer: string;
   usage?: AiChatUsage;
+  action?: AiConfirmBookingAction;
 }

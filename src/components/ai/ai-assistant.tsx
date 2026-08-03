@@ -1,13 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bot, Send, Sparkles, Trash2, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { endpoints } from "@/lib/api/endpoints";
 import { ApiError, apiErrorMessage } from "@/lib/api/client";
+import { queryKeys } from "@/lib/query/keys";
 import { useAuth } from "@/providers/auth-provider";
 import { ChatMessage, type ChatMessageData, LoadingMessage } from "./chat-message";
+import type { AiChatHistoryMessage, AiConfirmBookingAction, BookingsResponse } from "@/types";
 
 const MAX_MESSAGE_LENGTH = 800;
 const KEYBOARD_THRESHOLD = 120;
@@ -31,12 +34,14 @@ const suggestions = [
 
 export function AiAssistant() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessageData[]>([initialMessage]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [keyboardViewport, setKeyboardViewport] = useState<KeyboardViewport | null>(null);
   const requestInFlightRef = useRef(false);
+  const bookingInFlightRef = useRef(new Set<number>());
   const nextId = useRef(1);
   const panelRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -117,6 +122,9 @@ export function AiAssistant() {
     const message = value.trim();
     if (!message || requestInFlightRef.current || message.length > MAX_MESSAGE_LENGTH) return;
 
+    const history: AiChatHistoryMessage[] = messages
+      .flatMap((item) => item.role === "error" ? [] : [{ role: item.role, content: item.text }])
+      .slice(-8);
     requestInFlightRef.current = true;
     const userMessage: ChatMessageData = { id: nextId.current++, role: "user", text: message };
     setMessages((current) => [...current, userMessage]);
@@ -125,10 +133,11 @@ export function AiAssistant() {
     if (inputRef.current) inputRef.current.style.height = "44px";
 
     try {
-      const response = await endpoints.aiChat({ message });
+      const response = await endpoints.aiChat({ message, history });
       const answer = response.answer?.trim();
       if (!response.status || !answer) throw new Error("L'assistente non ha restituito una risposta valida.");
-      setMessages((current) => [...current, { id: nextId.current++, role: "assistant", text: answer }]);
+      const action = response.action?.type === "confirm_booking" ? response.action : undefined;
+      setMessages((current) => [...current, { id: nextId.current++, role: "assistant", text: answer, action, bookingStatus: action ? "idle" : undefined }]);
     } catch (error) {
       setMessages((current) => [...current, { id: nextId.current++, role: "error", text: assistantErrorMessage(error) }]);
     } finally {
@@ -144,11 +153,31 @@ export function AiAssistant() {
   }
 
   function clearChat() {
-    if (requestInFlightRef.current) return;
+    if (requestInFlightRef.current || bookingInFlightRef.current.size) return;
     setMessages([initialMessage]);
     setDraft("");
     nextId.current = 1;
     if (inputRef.current) inputRef.current.style.height = "44px";
+  }
+
+  async function confirmBooking(messageId: number, action: AiConfirmBookingAction) {
+    if (bookingInFlightRef.current.has(messageId)) return;
+    bookingInFlightRef.current.add(messageId);
+    setMessages((current) => current.map((item) => item.id === messageId ? { ...item, bookingStatus: "loading", bookingError: undefined } : item));
+
+    try {
+      const response = await endpoints.createBooking(action.payload);
+      if (response.status === false) throw new Error(response.message || "Non è stato possibile confermare la prenotazione.");
+      setMessages((current) => current.map((item) => item.id === messageId ? { ...item, bookingStatus: "success", bookingError: undefined } : item));
+      if (response.booking) {
+        queryClient.setQueryData<BookingsResponse>(queryKeys.bookings, (current) => ({ bookings: [response.booking!, ...(current?.bookings ?? []).filter((item) => item.id !== response.booking!.id)] }));
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.bookings, refetchType: "all" });
+    } catch (error) {
+      setMessages((current) => current.map((item) => item.id === messageId ? { ...item, bookingStatus: "error", bookingError: bookingErrorMessage(error) } : item));
+    } finally {
+      bookingInFlightRef.current.delete(messageId);
+    }
   }
 
   function handleInputKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -169,6 +198,7 @@ export function AiAssistant() {
   }
 
   if (typeof document === "undefined") return null;
+  const bookingPending = messages.some((message) => message.bookingStatus === "loading");
 
   return createPortal(
     <>
@@ -209,12 +239,12 @@ export function AiAssistant() {
               <header className="flex items-center gap-3 border-b border-white/8 p-4">
                 <span className="relative grid size-11 shrink-0 place-items-center rounded-2xl bg-amber-300 text-zinc-950"><Bot className="size-5" /><Sparkles className="absolute -right-1 -top-1 size-3.5 text-amber-200" /></span>
                 <div className="min-w-0 flex-1"><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-amber-300">Supporto intelligente</p><h2 id="ai-assistant-title" className="truncate text-lg font-semibold">Assistente BarberApp</h2></div>
-                {messages.length > 1 && <button type="button" onClick={clearChat} disabled={sending} aria-label="Svuota conversazione" title="Svuota conversazione" className="grid size-10 shrink-0 place-items-center rounded-full bg-white/5 text-zinc-400 transition hover:bg-red-400/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="size-4" /></button>}
+                {messages.length > 1 && <button type="button" onClick={clearChat} disabled={sending || bookingPending} aria-label="Svuota conversazione" title="Svuota conversazione" className="grid size-10 shrink-0 place-items-center rounded-full bg-white/5 text-zinc-400 transition hover:bg-red-400/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="size-4" /></button>}
                 <button type="button" onClick={close} aria-label="Chiudi assistente" className="grid size-10 shrink-0 place-items-center rounded-full bg-white/5 text-zinc-300 transition hover:bg-white/10"><X className="size-5" /></button>
               </header>
 
               <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5" aria-live="polite" aria-relevant="additions">
-                {messages.map((message) => <ChatMessage key={message.id} message={message} userAvatar={user?.avatar_url ?? user?.avatar} userName={[user?.name, user?.surname].filter(Boolean).join(" ")} />)}
+                {messages.map((message) => <ChatMessage key={message.id} message={message} userAvatar={user?.avatar_url ?? user?.avatar} userName={[user?.name, user?.surname].filter(Boolean).join(" ")} onConfirmBooking={confirmBooking} />)}
                 {messages.length === 1 && (
                   <div className="grid gap-2 pl-10" aria-label="Domande suggerite">
                     {suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void sendMessage(suggestion)} className="min-h-10 rounded-xl border border-amber-300/15 bg-amber-300/[.04] px-3 text-left text-xs text-amber-100 transition hover:bg-amber-300/10 disabled:opacity-50">{suggestion}</button>)}
@@ -244,7 +274,7 @@ export function AiAssistant() {
                   />
                   <button type="submit" disabled={sending || !draft.trim()} aria-label={sending ? "Invio in corso" : "Invia messaggio"} className="grid size-11 shrink-0 place-items-center rounded-2xl bg-amber-300 text-zinc-950 transition hover:bg-amber-200 disabled:bg-white/5 disabled:text-zinc-600"><Send className="size-4" /></button>
                 </div>
-                <div className="mt-2 flex items-center justify-between gap-3 px-1 text-[10px] text-zinc-600"><span>Invio per domanda singola</span><span id="ai-character-count" className={draft.length >= 780 ? "text-red-300" : draft.length >= 700 ? "text-amber-300" : undefined}>{draft.length}/{MAX_MESSAGE_LENGTH}</span></div>
+                <div className="mt-2 flex items-center justify-between gap-3 px-1 text-[10px] text-zinc-600"><span>Contesto conversazione attivo</span><span id="ai-character-count" className={draft.length >= 780 ? "text-red-300" : draft.length >= 700 ? "text-amber-300" : undefined}>{draft.length}/{MAX_MESSAGE_LENGTH}</span></div>
               </form>
             </motion.aside>
           </>
@@ -269,4 +299,10 @@ function assistantErrorMessage(error: unknown) {
     if (error.status === 503) return "L'assistente è temporaneamente non disponibile. Riprova più tardi.";
   }
   return apiErrorMessage(error);
+}
+
+function bookingErrorMessage(error: unknown) {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error && error.message) return error.message;
+  return "Non è stato possibile confermare la prenotazione. Riprova.";
 }
