@@ -1,6 +1,6 @@
 import { api, ApiError } from "./client";
 import { normalizeBookingDate } from "@/lib/format";
-import type { AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, LoyaltyResponse, Product, ProductsResponse, PushConfig, RedeemRewardResponse, Service, Staff, User } from "@/types";
+import type { AiChatRequest, AiChatResponse, AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, LoyaltyResponse, Product, ProductsResponse, PushConfig, RedeemRewardResponse, Service, Staff, User } from "@/types";
 
 type RawBooking = Omit<Booking, "staff" | "service"> & {
   staff?: Booking["staff"] | string;
@@ -64,4 +64,5 @@ export const endpoints = {
   pushConfig: () => api<PushConfig>("/push/config"),
   subscribePush: (body: unknown) => api<unknown>("/push/subscriptions", { method: "POST", body }),
   unsubscribePush: (body: unknown) => api<unknown>("/push/subscriptions", { method: "DELETE", body }),
+  aiChat: (body: AiChatRequest) => api<AiChatResponse>("/ai/chat", { method: "POST", body }),
 };

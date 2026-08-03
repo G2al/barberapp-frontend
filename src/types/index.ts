@@ -116,3 +116,20 @@ export interface BookingsResponse { status?: boolean; bookings: Booking[] }
 export interface ProductsResponse { status?: boolean; products: Product[] }
 export interface AvailabilityResponse { status?: boolean; slots: string[]; service_duration?: number }
 export interface PushConfig { enabled: boolean; public_key?: string }
+
+export interface AiChatRequest {
+  message: string;
+}
+
+export interface AiChatUsage {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+}
+
+export interface AiChatResponse {
+  status: boolean;
+  answer: string;
+  usage?: AiChatUsage;
+}
