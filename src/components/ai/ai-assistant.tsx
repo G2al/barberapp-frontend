@@ -208,9 +208,9 @@ export function AiAssistant() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: .8 }}
             whileTap={{ scale: .92 }}
-            className="fixed bottom-[calc(6.4rem+env(safe-area-inset-bottom))] right-5 z-[45] grid size-14 place-items-center rounded-full bg-amber-300 text-zinc-950 shadow-[0_14px_38px_rgba(200,164,91,.28)] sm:right-[max(1.25rem,calc((100vw-42rem)/2+1.25rem))]"
+            className="fixed bottom-[calc(5.65rem+env(safe-area-inset-bottom))] right-5 z-[45] grid size-12 place-items-center rounded-full bg-amber-300 text-zinc-950 shadow-[0_12px_34px_rgba(200,164,91,.24)] sm:right-[max(1.25rem,calc((100vw-42rem)/2+1.25rem))]"
           >
-            <Bot className="size-6" />
+            <Bot className="size-5" />
             <span className="absolute -right-0.5 -top-0.5 rounded-full bg-zinc-950 px-1.5 py-0.5 text-[8px] font-bold tracking-wider text-amber-300 ring-1 ring-amber-300/30">AI</span>
           </motion.button>
         )}
@@ -229,7 +229,7 @@ export function AiAssistant() {
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", stiffness: 330, damping: 34 }}
               style={keyboardViewport ? { top: keyboardViewport.top, bottom: "auto", height: keyboardViewport.height } : undefined}
-              className="fixed inset-x-0 bottom-0 z-[70] flex h-[min(82dvh,720px)] flex-col overflow-hidden rounded-t-[2rem] border border-white/10 bg-zinc-900 shadow-2xl sm:inset-x-auto sm:bottom-[calc(6.4rem+env(safe-area-inset-bottom))] sm:right-[max(1.25rem,calc((100vw-42rem)/2+1.25rem))] sm:h-[min(620px,calc(100dvh-8rem))] sm:w-[390px] sm:rounded-[2rem]"
+              className="fixed inset-x-0 bottom-0 z-[70] flex h-[min(82dvh,720px)] flex-col overflow-hidden rounded-t-[2rem] border border-white/10 bg-zinc-900 shadow-2xl sm:inset-x-auto sm:bottom-[calc(5.65rem+env(safe-area-inset-bottom))] sm:right-[max(1.25rem,calc((100vw-42rem)/2+1.25rem))] sm:h-[min(620px,calc(100dvh-8rem))] sm:w-[390px] sm:rounded-[2rem]"
             >
               <header className="flex items-center gap-3 border-b border-white/8 p-4">
                 <span className="relative grid size-11 shrink-0 place-items-center rounded-2xl bg-amber-300 text-zinc-950"><Bot className="size-5" /><Sparkles className="absolute -right-1 -top-1 size-3.5 text-amber-200" /></span>
