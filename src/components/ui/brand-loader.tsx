@@ -7,9 +7,11 @@ export type BrandLoaderPhase = "loading" | "complete" | "exit";
 
 export function BrandLoader({
   label = "Apertura Lama...",
+  completeLabel = "Pronto",
   phase = "loading",
 }: {
   label?: string;
+  completeLabel?: string;
   phase?: BrandLoaderPhase;
 }) {
   const isReady = phase !== "loading";
@@ -69,7 +71,7 @@ export function BrandLoader({
           animate={{ opacity: 0.72, y: 0 }}
           className="mt-4 text-[11px] font-medium uppercase tracking-[.24em] text-zinc-400"
         >
-          {isReady ? "Pronto" : label}
+          {isReady ? completeLabel : label}
         </motion.p>
       </div>
     </motion.main>

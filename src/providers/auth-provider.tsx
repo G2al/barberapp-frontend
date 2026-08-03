@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("barberapp:unauthorized", unauthorized);
   }, [clear, router]);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout: async () => { try { await endpoints.logout(); } finally { clear(); router.replace("/login"); } } }), [clear, loading, refreshUser, router, user]);
+  const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout: async () => { try { await endpoints.logout(); } finally { clear(); } } }), [clear, loading, refreshUser, user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

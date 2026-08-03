@@ -132,10 +132,13 @@
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     font-optical-sizing: auto;
     min-height: 100dvh;
-    background-image: radial-gradient(circle at 50% -10%, rgba(200, 164, 91, .14), transparent 32rem);
+    background-color: #0b0b0a;
+    background-image: none;
   }
   html {
     @apply font-sans;
+    min-height: 100%;
+    background-color: #0b0b0a;
   }
   h1, h2, h3 {
     font-family: var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;

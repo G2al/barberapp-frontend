@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, CalendarDays, Home, LogOut, Package, Scissors, UserRound, X } from "lucide-react";
+import { Bell, BellOff, CalendarDays, Home, LogOut, Package, Scissors, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,7 +11,8 @@ import { useAuth } from "@/providers/auth-provider";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker";
 import { PushControls } from "@/components/profile/push-panel";
 import { FavoritesMenu } from "@/components/products/favorites-menu";
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { BrandLoader, type BrandLoaderPhase } from "@/components/ui/brand-loader";
+import { usePushStatus } from "@/hooks/use-push-status";
 
 const items = [
   { href: "/home", label: "Home", icon: Home },
@@ -29,6 +30,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutPhase, setLogoutPhase] = useState<BrandLoaderPhase>("loading");
+  const pushStatus = usePushStatus();
   useEffect(() => { if (!loading && !user) router.replace("/login"); }, [loading, router, user]);
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -40,20 +43,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   async function handleLogout() {
     if (!window.confirm("Vuoi uscire dal tuo account?")) return;
     setLoggingOut(true);
+    setLogoutPhase("loading");
     queryClient.clear();
-    try { await logout(); } catch { setLoggingOut(false); }
+    await Promise.all([
+      logout().catch(() => undefined),
+      new Promise((resolve) => window.setTimeout(resolve, 900)),
+    ]);
+    setLogoutPhase("complete");
+    await new Promise((resolve) => window.setTimeout(resolve, 320));
+    setLogoutPhase("exit");
+    await new Promise((resolve) => window.setTimeout(resolve, 440));
+    router.replace("/login");
   }
 
+  if (loggingOut) return <BrandLoader label="Chiusura sessione..." completeLabel="A presto" phase={logoutPhase} />;
   if (loading || !user) return <BrandLoader label="Prepariamo la tua esperienza" />;
 
-  return <div className="mx-auto min-h-dvh w-full max-w-2xl bg-zinc-950/30 shadow-2xl">
+  return <div className="mx-auto min-h-dvh w-full max-w-2xl bg-[#0b0b0a] shadow-2xl">
     <ServiceWorkerRegistration />
     <header className="sticky top-0 z-30 bg-zinc-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
       <div className="flex h-[4.25rem] items-center justify-between gap-3 px-5">
         <Link href="/home" aria-label="Lama, vai alla home" className="relative h-12 w-32 shrink-0 overflow-hidden"><Image src="/lama-logo-white.png" alt="Lama Barber App" fill sizes="128px" className="scale-[1.7] object-contain drop-shadow-[0_5px_14px_rgba(200,164,91,.14)]" preload /></Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <FavoritesMenu open={favoritesOpen} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(true); }} onClose={() => setFavoritesOpen(false)} />
-          <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label="Attiva o disattiva notifiche" aria-haspopup="dialog" className="grid size-10 place-items-center rounded-full bg-white/[.055] text-zinc-200 shadow-lg transition hover:bg-white/10"><Bell className="size-[1.15rem]" /></button>
+          <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label={pushStatus.active ? "Notifiche attive. Apri preferenze" : "Notifiche disattivate. Apri preferenze"} aria-haspopup="dialog" className={`relative grid size-10 place-items-center rounded-full border shadow-lg transition duration-300 ${!pushStatus.checked ? "border-white/10 bg-white/[.055] text-zinc-300" : pushStatus.active ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300 shadow-emerald-950/20" : "border-red-300/15 bg-red-400/[.08] text-red-300 shadow-red-950/20"}`}>{pushStatus.active ? <Bell className="size-[1.15rem]" /> : <BellOff className="size-[1.15rem]" />}<motion.span aria-hidden className={`absolute right-0.5 top-0.5 size-2 rounded-full ring-2 ring-zinc-950 ${!pushStatus.checked ? "animate-pulse bg-zinc-500" : pushStatus.active ? "bg-emerald-400" : "bg-red-400"}`} layout /></button>
           <button onClick={() => void handleLogout()} disabled={loggingOut} aria-label="Esci dall’account" className="grid size-10 place-items-center rounded-full bg-red-400/[.07] text-red-300 shadow-lg transition hover:bg-red-400/15 disabled:opacity-50"><LogOut className="size-[1.15rem]" /></button>
         </div>
       </div>
