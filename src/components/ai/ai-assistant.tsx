@@ -182,13 +182,6 @@ export function AiAssistant() {
     }
   }
 
-  function handleInputKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-      event.preventDefault();
-      void sendMessage();
-    }
-  }
-
   function trapFocus(event: KeyboardEvent<HTMLElement>) {
     if (event.key !== "Tab" || !panelRef.current) return;
     const controls = Array.from(panelRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
@@ -262,21 +255,21 @@ export function AiAssistant() {
                     value={draft}
                     maxLength={MAX_MESSAGE_LENGTH}
                     rows={1}
+                    enterKeyHint="enter"
                     disabled={sending}
                     aria-label="Scrivi un messaggio all'assistente"
                     aria-describedby="ai-character-count"
                     placeholder="Chiedi qualcosa a Lama..."
-                    onKeyDown={handleInputKeyDown}
                     onChange={(event) => {
                       setDraft(event.target.value);
                       event.currentTarget.style.height = "44px";
                       event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 96)}px`;
                     }}
-                    className="min-h-11 max-h-24 flex-1 resize-none bg-transparent px-3 py-2.5 text-[16px] leading-6 text-white outline-none placeholder:text-zinc-600 disabled:opacity-60"
+                    className="min-h-11 max-h-24 flex-1 resize-none overflow-y-auto bg-transparent px-3 py-2.5 text-[16px] leading-6 text-white outline-none placeholder:text-zinc-600 disabled:opacity-60"
                   />
                   <button type="submit" disabled={sending || !draft.trim()} aria-label={sending ? "Invio in corso" : "Invia messaggio"} className="grid size-11 shrink-0 place-items-center rounded-2xl bg-amber-300 text-zinc-950 transition hover:bg-amber-200 disabled:bg-white/5 disabled:text-zinc-600"><Send className="size-4" /></button>
                 </div>
-                <div className="mt-2 flex items-center justify-between gap-3 px-1 text-[10px] text-zinc-600"><span>Contesto conversazione attivo</span><span id="ai-character-count" className={draft.length >= 780 ? "text-red-300" : draft.length >= 700 ? "text-amber-300" : undefined}>{draft.length}/{MAX_MESSAGE_LENGTH}</span></div>
+                <div className="mt-2 flex items-center justify-between gap-3 px-1 text-[10px] text-zinc-600"><span>Invia usando il pulsante</span><span id="ai-character-count" className={draft.length >= 780 ? "text-red-300" : draft.length >= 700 ? "text-amber-300" : undefined}>{draft.length}/{MAX_MESSAGE_LENGTH}</span></div>
               </form>
             </motion.aside>
           </>
