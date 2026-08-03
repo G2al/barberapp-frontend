@@ -9,6 +9,13 @@ import { ApiError, apiErrorMessage } from "@/lib/api/client";
 import { ChatMessage, type ChatMessageData, LoadingMessage } from "./chat-message";
 
 const MAX_MESSAGE_LENGTH = 800;
+const KEYBOARD_THRESHOLD = 120;
+
+type KeyboardViewport = {
+  top: number;
+  height: number;
+};
+
 const initialMessage: ChatMessageData = {
   id: 0,
   role: "assistant",
@@ -26,11 +33,12 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<ChatMessageData[]>([initialMessage]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [keyboardViewport, setKeyboardViewport] = useState<KeyboardViewport | null>(null);
   const requestInFlightRef = useRef(false);
   const nextId = useRef(1);
   const panelRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const close = useCallback(() => {
@@ -58,8 +66,50 @@ export function AiAssistant() {
   }, [close, open]);
 
   useEffect(() => {
-    if (open) messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, open, sending]);
+    if (!open) return;
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) return;
+
+    const syncViewport = () => {
+      if (window.matchMedia("(min-width: 640px)").matches) {
+        setKeyboardViewport(null);
+        return;
+      }
+
+      const layoutHeight = Math.max(window.innerHeight, document.documentElement.clientHeight);
+      const coveredHeight = layoutHeight - visualViewport.height - visualViewport.offsetTop;
+      const keyboardOpen = document.activeElement === inputRef.current && coveredHeight > KEYBOARD_THRESHOLD;
+
+      if (!keyboardOpen) {
+        setKeyboardViewport(null);
+        return;
+      }
+
+      const height = Math.min(visualViewport.height, Math.max(320, Math.round(visualViewport.height * .86)));
+      const top = Math.round(visualViewport.offsetTop + visualViewport.height - height);
+      setKeyboardViewport((current) => current?.top === top && current.height === height ? current : { top, height });
+    };
+
+    syncViewport();
+    visualViewport.addEventListener("resize", syncViewport);
+    visualViewport.addEventListener("scroll", syncViewport);
+    window.addEventListener("orientationchange", syncViewport);
+    return () => {
+      visualViewport.removeEventListener("resize", syncViewport);
+      visualViewport.removeEventListener("scroll", syncViewport);
+      window.removeEventListener("orientationchange", syncViewport);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const messagesArea = messagesRef.current;
+    if (!messagesArea) return;
+    const frame = window.requestAnimationFrame(() => {
+      messagesArea.scrollTo({ top: messagesArea.scrollHeight, behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [keyboardViewport, messages, open, sending]);
 
   async function sendMessage(value = draft) {
     const message = value.trim();
@@ -143,6 +193,7 @@ export function AiAssistant() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", stiffness: 330, damping: 34 }}
+              style={keyboardViewport ? { top: keyboardViewport.top, bottom: "auto", height: keyboardViewport.height } : undefined}
               className="fixed inset-x-0 bottom-0 z-[70] flex h-[min(82dvh,720px)] flex-col overflow-hidden rounded-t-[2rem] border border-white/10 bg-zinc-900 shadow-2xl sm:inset-x-auto sm:bottom-[calc(6.4rem+env(safe-area-inset-bottom))] sm:right-[max(1.25rem,calc((100vw-42rem)/2+1.25rem))] sm:h-[min(620px,calc(100dvh-8rem))] sm:w-[390px] sm:rounded-[2rem]"
             >
               <header className="flex items-center gap-3 border-b border-white/8 p-4">
@@ -151,7 +202,7 @@ export function AiAssistant() {
                 <button type="button" onClick={close} aria-label="Chiudi assistente" className="grid size-10 shrink-0 place-items-center rounded-full bg-white/5 text-zinc-300 transition hover:bg-white/10"><X className="size-5" /></button>
               </header>
 
-              <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5" aria-live="polite" aria-relevant="additions">
+              <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5" aria-live="polite" aria-relevant="additions">
                 {messages.map((message) => <ChatMessage key={message.id} message={message} />)}
                 {messages.length === 1 && (
                   <div className="grid gap-2 pl-10" aria-label="Domande suggerite">
@@ -159,10 +210,9 @@ export function AiAssistant() {
                   </div>
                 )}
                 {sending && <LoadingMessage />}
-                <div ref={messagesEndRef} />
               </div>
 
-              <form onSubmit={submit} className="border-t border-white/8 bg-zinc-950/60 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 sm:pb-4">
+              <form onSubmit={submit} className={`shrink-0 border-t border-white/8 bg-zinc-950/60 px-4 pt-3 sm:pb-4 ${keyboardViewport ? "pb-2" : "pb-[calc(1rem+env(safe-area-inset-bottom))]"}`}>
                 <div className="flex items-end gap-2 rounded-[1.35rem] border border-white/10 bg-white/[.045] p-1.5 focus-within:border-amber-300/40 focus-within:ring-4 focus-within:ring-amber-300/[.06]">
                   <textarea
                     ref={inputRef}
