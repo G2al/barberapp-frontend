@@ -1,11 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Bot, Send, Sparkles, X } from "lucide-react";
+import { Bot, Send, Sparkles, Trash2, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { endpoints } from "@/lib/api/endpoints";
 import { ApiError, apiErrorMessage } from "@/lib/api/client";
+import { useAuth } from "@/providers/auth-provider";
 import { ChatMessage, type ChatMessageData, LoadingMessage } from "./chat-message";
 
 const MAX_MESSAGE_LENGTH = 800;
@@ -29,6 +30,7 @@ const suggestions = [
 ];
 
 export function AiAssistant() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessageData[]>([initialMessage]);
   const [draft, setDraft] = useState("");
@@ -141,6 +143,14 @@ export function AiAssistant() {
     void sendMessage();
   }
 
+  function clearChat() {
+    if (requestInFlightRef.current) return;
+    setMessages([initialMessage]);
+    setDraft("");
+    nextId.current = 1;
+    if (inputRef.current) inputRef.current.style.height = "44px";
+  }
+
   function handleInputKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
@@ -199,11 +209,12 @@ export function AiAssistant() {
               <header className="flex items-center gap-3 border-b border-white/8 p-4">
                 <span className="relative grid size-11 shrink-0 place-items-center rounded-2xl bg-amber-300 text-zinc-950"><Bot className="size-5" /><Sparkles className="absolute -right-1 -top-1 size-3.5 text-amber-200" /></span>
                 <div className="min-w-0 flex-1"><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-amber-300">Supporto intelligente</p><h2 id="ai-assistant-title" className="truncate text-lg font-semibold">Assistente BarberApp</h2></div>
+                {messages.length > 1 && <button type="button" onClick={clearChat} disabled={sending} aria-label="Svuota conversazione" title="Svuota conversazione" className="grid size-10 shrink-0 place-items-center rounded-full bg-white/5 text-zinc-400 transition hover:bg-red-400/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="size-4" /></button>}
                 <button type="button" onClick={close} aria-label="Chiudi assistente" className="grid size-10 shrink-0 place-items-center rounded-full bg-white/5 text-zinc-300 transition hover:bg-white/10"><X className="size-5" /></button>
               </header>
 
               <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5" aria-live="polite" aria-relevant="additions">
-                {messages.map((message) => <ChatMessage key={message.id} message={message} />)}
+                {messages.map((message) => <ChatMessage key={message.id} message={message} userAvatar={user?.avatar_url ?? user?.avatar} userName={[user?.name, user?.surname].filter(Boolean).join(" ")} />)}
                 {messages.length === 1 && (
                   <div className="grid gap-2 pl-10" aria-label="Domande suggerite">
                     {suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void sendMessage(suggestion)} className="min-h-10 rounded-xl border border-amber-300/15 bg-amber-300/[.04] px-3 text-left text-xs text-amber-100 transition hover:bg-amber-300/10 disabled:opacity-50">{suggestion}</button>)}
