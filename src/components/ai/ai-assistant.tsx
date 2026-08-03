@@ -49,6 +49,8 @@ export function AiAssistant() {
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const close = useCallback(() => {
+    inputRef.current?.blur();
+    setKeyboardViewport(null);
     setOpen(false);
     window.setTimeout(() => previousFocusRef.current?.focus(), 250);
   }, []);

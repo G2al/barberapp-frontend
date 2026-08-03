@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: "cover", interactiveWidget: "resizes-visual", themeColor: "#0b0b0a" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: "cover", themeColor: "#0b0b0a" };
 
 export default function RootLayout({
   children,
