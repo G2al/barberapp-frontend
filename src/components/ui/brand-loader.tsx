@@ -45,7 +45,8 @@ export function BrandLoader({
             fill
             sizes="288px"
             className="scale-[1.55] object-contain"
-            preload
+            fetchPriority="high"
+            loading="eager"
           />
         </motion.div>
 
