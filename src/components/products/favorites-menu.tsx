@@ -16,7 +16,7 @@ export function FavoritesMenu({ open, onOpen, onClose }: { open: boolean; onOpen
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: queryKeys.favorites, queryFn: endpoints.favorites });
   const products = query.data ? (Array.isArray(query.data) ? query.data : "favorites" in query.data ? query.data.favorites : query.data.products) : [];
-  const whatsappMessage = `Ciao, sono interessato ${products.length === 1 ? "a questo prodotto" : "a questi prodotti"}:\n\n${products.map((product) => `• ${product.name}`).join("\n")}\n\nPotrei avere maggiori informazioni su disponibilità e prezzo?`;
+  const whatsappMessage = `Ciao Lama, sono interessato ${products.length === 1 ? "a questo prodotto" : "a questi prodotti"}:\n\n${products.map((product) => `• ${product.name}`).join("\n")}\n\nPotrei avere maggiori informazioni su disponibilità e prezzo?`;
   const whatsappUrl = `https://wa.me/393240994144?text=${encodeURIComponent(whatsappMessage)}`;
   const remove = useMutation({ mutationFn: endpoints.removeFavorite, onSuccess: async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: queryKeys.favorites }), queryClient.invalidateQueries({ queryKey: queryKeys.products })]); } });
 

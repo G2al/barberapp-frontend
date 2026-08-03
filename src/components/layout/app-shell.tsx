@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Bell, CalendarDays, Home, LogOut, Package, Scissors, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -48,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ServiceWorkerRegistration />
     <header className="sticky top-0 z-30 bg-zinc-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
       <div className="flex h-[4.25rem] items-center justify-between gap-3 px-5">
-        <Link href="/home" className="flex min-w-0 items-center gap-2 text-base font-semibold tracking-tight sm:text-lg"><Scissors className="size-5 shrink-0 text-amber-300" /><span className="truncate">BarberApp</span></Link>
+        <Link href="/home" aria-label="Lama, vai alla home" className="relative h-10 w-[6.5rem] shrink-0 overflow-hidden"><Image src="/lama-logo.png" alt="Lama Barber App" fill sizes="104px" className="scale-[1.65] object-contain brightness-125 contrast-110" /></Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <FavoritesMenu open={favoritesOpen} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(true); }} onClose={() => setFavoritesOpen(false)} />
           <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label="Attiva o disattiva notifiche" aria-haspopup="dialog" className="grid size-10 place-items-center rounded-full bg-white/[.055] text-zinc-200 shadow-lg transition hover:bg-white/10"><Bell className="size-[1.15rem]" /></button>

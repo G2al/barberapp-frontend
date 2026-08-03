@@ -43,7 +43,7 @@ export function ProductsCatalog() {
   });
 
   return <>
-    <PageTitle eyebrow="Selezione barber" title="Prodotti" description="Cura quotidiana, scelta dai professionisti della barberia." />
+    <PageTitle eyebrow="Selezione Lama" title="Prodotti" description="Cura quotidiana, scelta dai professionisti Lama." />
     <div className="relative"><Search className="absolute left-4 top-3.5 size-5 text-zinc-500" /><Input value={search} onChange={(event) => setSearch(event.target.value)} aria-label="Cerca prodotti" placeholder="Cerca un prodotto" className="pl-12" /></div>
     <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-2">{categories.map((item) => <button key={item} onClick={() => setCategory(item)} className={`relative min-h-10 shrink-0 overflow-hidden rounded-full px-4 text-xs ${category === item ? "text-zinc-950" : "bg-white/[.035] text-zinc-400"}`}>{category === item && <motion.span layoutId="category-active" className="absolute inset-0 bg-amber-300" />}<span className="relative">{item}</span></button>)}</div>
     {error && <p role="alert" className="mt-3 rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}

@@ -39,7 +39,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       if (error instanceof ApiError && error.status === 422 && error.payload && typeof error.payload === "object" && "errors" in error.payload) {
         const fieldErrors = (error.payload as { errors?: Record<string, string[]> }).errors ?? {};
         Object.entries(fieldErrors).forEach(([key, messages]) => setError(key as keyof Values, { message: messages[0] }));
-      } else setServerError(error instanceof ApiError && error.status === 403 ? "Il tuo account è stato disattivato. Contatta la barberia." : apiErrorMessage(error));
+      } else setServerError(error instanceof ApiError && error.status === 403 ? "Il tuo account è stato disattivato. Contatta Lama." : apiErrorMessage(error));
     }
   }
   if (missingResetData) return <div role="alert" className="rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">Il link non è valido: token o email mancanti. Richiedi una nuova email di recupero.</div>;

@@ -22,7 +22,7 @@ export function HomeDashboard() {
   const points = loyalty.data?.balance;
 
   return <>
-    <PageTitle eyebrow="Il tuo barber" title={`Ciao, ${user?.name ?? ""}`} description="Il prossimo taglio è a portata di tap." />
+    <PageTitle eyebrow="Lama Barber App" title={`Ciao, ${user?.name ?? ""}`} description="Il tuo prossimo appuntamento da Lama è a portata di tap." />
     <Link href="/prenota" className="mb-6 flex min-h-16 items-center justify-between rounded-[1.5rem] bg-amber-300 px-5 font-semibold text-zinc-950 shadow-[0_15px_45px_rgba(252,211,77,.12)]"><span>Prenota ora</span><span className="grid size-10 place-items-center rounded-full bg-zinc-950/10"><ArrowRight className="size-5" /></span></Link>
 
     <section aria-labelledby="next-title">
@@ -31,6 +31,6 @@ export function HomeDashboard() {
     </section>
 
     <div className="mt-5 grid grid-cols-2 gap-3"><Link href="/prodotti"><Card className="h-full p-4"><Package className="size-5 text-amber-300" /><p className="mt-5 font-medium">Prodotti</p><p className="mt-1 text-xs text-zinc-500">Scopri il catalogo</p></Card></Link><Link href="/profilo#loyalty"><Card className="h-full p-4"><Sparkles className="size-5 text-amber-300" /><p className="mt-5 font-medium">{loyalty.isPending ? "…" : points != null ? `${points} punti` : "Loyalty"}</p><p className="mt-1 text-xs text-zinc-500">Premi e vantaggi</p></Card></Link></div>
-    {config.data && <Card className="mt-5"><h2 className="font-semibold">{config.data.shop_name ?? config.data.name ?? "La barberia"}</h2>{config.data.address && <p className="mt-3 flex gap-2 text-sm text-zinc-400"><MapPin className="size-4 shrink-0 text-amber-300" />{config.data.address}</p>}{config.data.phone && <a href={`tel:${config.data.phone}`} className="mt-3 flex gap-2 text-sm text-zinc-400"><Phone className="size-4 text-amber-300" />{config.data.phone}</a>}</Card>}
+    {config.data && <Card className="mt-5"><h2 className="font-semibold">Lama Barber</h2>{config.data.address && <p className="mt-3 flex gap-2 text-sm text-zinc-400"><MapPin className="size-4 shrink-0 text-amber-300" />{config.data.address}</p>}{config.data.phone && <a href={`tel:${config.data.phone}`} className="mt-3 flex gap-2 text-sm text-zinc-400"><Phone className="size-4 text-amber-300" />{config.data.phone}</a>}</Card>}
   </>;
 }
