@@ -1,14 +1,14 @@
-const SHELL_CACHE = "lama-shell-v1";
+const SHELL_CACHE = "mottolas-shell-v1";
 self.addEventListener("install", (event) => event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.add("/offline")).then(() => self.skipWaiting())));
 self.addEventListener("activate", (event) => event.waitUntil(Promise.all([caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== SHELL_CACHE).map((key) => caches.delete(key)))), self.clients.claim()])));
 self.addEventListener("fetch", (event) => { if (event.request.mode === "navigate") event.respondWith(fetch(event.request).catch(() => caches.match("/offline"))); });
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data?.json?.() ?? {}; } catch { data = { body: event.data?.text?.() }; }
-  const tag = data.tag ?? (data.booking_id ? `booking-${data.booking_id}` : "lama-update");
-  event.waitUntil(self.registration.showNotification(data.title ?? "Lama", {
+  const tag = data.tag ?? (data.booking_id ? `booking-${data.booking_id}` : "mottolas-update");
+  event.waitUntil(self.registration.showNotification(data.title ?? "Mottola's Family", {
     body: data.body ?? "Hai un nuovo aggiornamento.",
-    icon: "/lama-logo-original.png",
+    icon: "/mottola-icon.png",
     tag,
     renotify: true,
     timestamp: data.timestamp ? new Date(data.timestamp).getTime() : Date.now(),

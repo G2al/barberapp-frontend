@@ -1,10 +1,13 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
 const background = { r: 11, g: 11, b: 10, alpha: 1 };
-const source = path.resolve("public/lama-logo-white.png");
+const source = path.resolve("public/logo-mottola-white.png");
 const destination = path.resolve("public/apple-splash");
+const publicIcon = path.resolve("public/mottola-icon.png");
+const appIcon = path.resolve("src/app/icon.png");
+const appleIcon = path.resolve("src/app/apple-icon.png");
 
 const screens = [
   ["iphone-5", 640, 1136],
@@ -36,4 +39,14 @@ for (const [name, width, height] of screens) {
     .toFile(path.join(destination, `${name}.png`));
 }
 
-console.log(`Generated ${screens.length} iOS launch screens in ${destination}`);
+const iconSize = 512;
+const iconLogoWidth = 390;
+const iconLogo = await sharp(trimmedLogo).resize({ width: iconLogoWidth, withoutEnlargement: false }).png().toBuffer();
+const { height: iconLogoHeight = 0 } = await sharp(iconLogo).metadata();
+const icon = await sharp({ create: { width: iconSize, height: iconSize, channels: 4, background } })
+  .composite([{ input: iconLogo, left: Math.round((iconSize - iconLogoWidth) / 2), top: Math.round((iconSize - iconLogoHeight) / 2) }])
+  .png({ compressionLevel: 9, adaptiveFiltering: true })
+  .toBuffer();
+
+await Promise.all([writeFile(publicIcon, icon), writeFile(appIcon, icon), writeFile(appleIcon, icon)]);
+console.log(`Generated ${screens.length} iOS launch screens and Mottola's Family app icons`);

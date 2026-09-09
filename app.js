@@ -13,10 +13,10 @@ application
   .prepare()
   .then(() => {
     createServer((request, response) => handle(request, response)).listen(port, () => {
-      console.log(`BarberApp ready on port ${port}`);
+      console.log(`Mottola's Family ready on port ${port}`);
     });
   })
   .catch((error) => {
-    console.error("Unable to start BarberApp", error);
+    console.error("Unable to start Mottola's Family", error);
     process.exit(1);
   });

@@ -1,7 +1,7 @@
 import type { User } from "@/types";
 
-const TOKEN_KEY = "barberapp_token";
-const USER_KEY = "barberapp_user";
+const TOKEN_KEY = "mottolas_token";
+const USER_KEY = "mottolas_user";
 
 const isBrowser = () => typeof window !== "undefined";
 

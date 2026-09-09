@@ -15,7 +15,6 @@ import type { User } from "@/types";
 import { AppImage } from "@/components/ui/app-image";
 import { FieldError, Input, Label } from "@/components/ui/primitives";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { LoyaltyPanel } from "./loyalty-panel";
 import { PushControls } from "./push-panel";
 
 const profileSchema = z.object({ name: z.string().min(2, "Inserisci il nome"), surname: z.string().min(2, "Inserisci il cognome"), email: z.email("Email non valida"), phone: z.string().min(6, "Telefono non valido") });
@@ -71,8 +70,6 @@ export function ProfilePage() {
         {avatar.isPending && <p className="mt-2 text-xs text-amber-200/70">Caricamento immagine…</p>}
       </div>
     </section>
-
-    <div id="loyalty" className="scroll-mt-20"><LoyaltyPanel /></div>
 
     <div className="mt-4 space-y-2">
       <ProfileSection id="profile" title="Dati personali" description="Nome, contatti ed email" icon={<UserRound />} open={openSection === "profile"} onToggle={() => setOpenSection(openSection === "profile" ? null : "profile")}>

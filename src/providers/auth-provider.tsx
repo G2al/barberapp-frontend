@@ -28,8 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [clear, refreshUser]);
   useEffect(() => {
     const unauthorized = () => { clear(); router.replace("/login?session=expired"); };
-    window.addEventListener("barberapp:unauthorized", unauthorized);
-    return () => window.removeEventListener("barberapp:unauthorized", unauthorized);
+    window.addEventListener("mottolas:unauthorized", unauthorized);
+    return () => window.removeEventListener("mottolas:unauthorized", unauthorized);
   }, [clear, router]);
 
   const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout: async () => { try { await endpoints.logout(); } finally { clear(); } } }), [clear, loading, refreshUser, user]);

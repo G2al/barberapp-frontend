@@ -15,7 +15,7 @@ Audit eseguito il 3 agosto 2026 sulla build di produzione, pagina `/login`, prof
 
 ## Intervento applicato
 
-Il logo Lama era l'elemento LCP. È stato reso immediatamente individuabile dal browser con caricamento eager e priorità alta. Dopo l'intervento tutti i controlli Lighthouse relativi alla scoperta della risorsa LCP risultano superati.
+Il logo Mottola's Family era l'elemento LCP. È stato reso immediatamente individuabile dal browser con caricamento eager e priorità alta. Dopo l'intervento tutti i controlli Lighthouse relativi alla scoperta della risorsa LCP risultano superati.
 
 ## Osservazioni
 

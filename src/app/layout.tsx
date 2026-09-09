@@ -10,13 +10,13 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Lama Barber App", template: "%s · Lama" },
-  description: "Prenota da Lama, scopri i prodotti e porta sempre con te la tua fidelity card.",
-  applicationName: "Lama Barber App",
+  title: { default: "Mottola's Family", template: "%s · Mottola's Family" },
+  description: "Prenota da Mottola's Family e scopri prodotti e servizi dedicati al tuo stile.",
+  applicationName: "Mottola's Family",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Lama",
+    title: "Mottola's Family",
     startupImage: [
       { url: "/apple-splash/iphone-5.png", media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" },
       { url: "/apple-splash/iphone-se.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" },

@@ -41,7 +41,7 @@ export async function api<T>(endpoint: string, options: Options = {}): Promise<T
   if (!response.ok) {
     if (response.status === 401 && options.auth !== false) {
       authStorage.clear();
-      window.dispatchEvent(new Event("barberapp:unauthorized"));
+      window.dispatchEvent(new Event("mottolas:unauthorized"));
     }
     throw new ApiError(response.status, payload, messageFrom(payload, response.status));
   }

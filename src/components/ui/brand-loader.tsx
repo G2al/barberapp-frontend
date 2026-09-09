@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 export type BrandLoaderPhase = "loading" | "complete" | "exit";
 
 export function BrandLoader({
-  label = "Apertura Lama...",
+  label = "Apertura Mottola's Family...",
   completeLabel = "Pronto",
   phase = "loading",
 }: {
@@ -37,14 +37,14 @@ export function BrandLoader({
           initial={{ opacity: 0, scale: 0.84, y: 10 }}
           animate={{ opacity: 1, scale: isReady ? 1.035 : 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="relative h-36 w-72 overflow-hidden drop-shadow-[0_14px_38px_rgba(200,164,91,.16)]"
+          className="relative h-36 w-72 overflow-hidden drop-shadow-[0_14px_38px_rgba(215,212,204,.14)]"
         >
           <Image
-            src="/lama-logo-white.png"
-            alt="Lama Barber App"
+            src="/logo-mottola-white.png"
+            alt="Mottola's Family"
             fill
             sizes="288px"
-            className="scale-[1.55] object-contain"
+            className="object-contain"
             fetchPriority="high"
             loading="eager"
           />
@@ -59,7 +59,7 @@ export function BrandLoader({
           aria-valuenow={isReady ? 100 : undefined}
         >
           <motion.div
-            className="h-full rounded-full bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,.55)]"
+            className="h-full rounded-full bg-amber-300 shadow-[0_0_14px_rgba(215,212,204,.45)]"
             initial={{ width: "4%" }}
             animate={{ width: isReady ? "100%" : "82%" }}
             transition={{ duration: isReady ? 0.3 : 1.15, ease: [0.22, 1, 0.36, 1] }}

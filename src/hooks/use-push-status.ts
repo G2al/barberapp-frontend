@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const PUSH_STATUS_EVENT = "lama:push-status";
+const PUSH_STATUS_EVENT = "mottolas:push-status";
 
 type PushStatus = {
   active: boolean;

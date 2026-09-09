@@ -1,6 +1,6 @@
-import { api, ApiError } from "./client";
+import { api } from "./client";
 import { normalizeBookingDate } from "@/lib/format";
-import type { AiChatRequest, AiChatResponse, AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, LoyaltyResponse, Product, ProductsResponse, PushConfig, RedeemRewardResponse, Service, Staff, User } from "@/types";
+import type { AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, Product, ProductsResponse, PushConfig, Service, Staff, User } from "@/types";
 
 type RawBooking = Omit<Booking, "staff" | "service"> & {
   staff?: Booking["staff"] | string;
@@ -55,14 +55,7 @@ export const endpoints = {
   favorites: () => api<Product[] | ProductsResponse | { favorites: Product[] }>("/favorites"),
   addFavorite: (id: string | number) => api<unknown>(`/favorites/${id}`, { method: "POST" }),
   removeFavorite: (id: string | number) => api<unknown>(`/favorites/${id}`, { method: "DELETE" }),
-  loyalty: async () => {
-    const response = await api<LoyaltyResponse>("/loyalty/summary");
-    if (!response.status || !response.loyalty) throw new ApiError(500, response, "Risposta loyalty non valida.");
-    return response.loyalty;
-  },
-  redeemReward: (id: string | number) => api<RedeemRewardResponse>(`/loyalty/rewards/${id}/redeem`, { method: "POST" }),
   pushConfig: () => api<PushConfig>("/push/config"),
   subscribePush: (body: unknown) => api<unknown>("/push/subscriptions", { method: "POST", body }),
   unsubscribePush: (body: unknown) => api<unknown>("/push/subscriptions", { method: "DELETE", body }),
-  aiChat: (body: AiChatRequest) => api<AiChatResponse>("/ai/chat", { method: "POST", body }),
 };
