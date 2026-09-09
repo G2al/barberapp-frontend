@@ -25,7 +25,7 @@ export const normalizePhone = (value: string) => value.replace(/\D/g, "");
 export const bookingStatus: Record<BookingStatus, string> = { pending: "In attesa", confirmed: "Confermata", completed: "Completata", cancelled: "Annullata", no_show: "Non presentato" };
 export const bookingDate = (date: string, time: string) => new Date(`${normalizeBookingDate(date)}T${time.length === 5 ? `${time}:00` : time}`);
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "https://gaetabet.it/api").replace(/\/api\/?$/, "");
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "https://admin.mottolasfamily.it/api").replace(/\/api\/?$/, "");
 export function imageUrl(value?: string | null) {
   if (!value) return "/placeholder-avatar.svg";
   if (/^https?:\/\//i.test(value) || value.startsWith("data:") || value.startsWith("blob:")) return value;

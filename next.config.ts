@@ -7,8 +7,22 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "gaetabet.it",
+        hostname: "admin.mottolasfamily.it",
         port: "",
+        pathname: "/**",
+        search: "",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "8000",
+        pathname: "/**",
+        search: "",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8000",
         pathname: "/**",
         search: "",
       },

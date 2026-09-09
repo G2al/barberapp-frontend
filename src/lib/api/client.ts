@@ -1,6 +1,6 @@
 import { authStorage } from "@/lib/auth/storage";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://gaetabet.it/api").replace(/\/$/, "");
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://admin.mottolasfamily.it/api").replace(/\/$/, "");
 
 export class ApiError<T = unknown> extends Error {
   constructor(public status: number, public payload: T, message: string) { super(message); this.name = "ApiError"; }
