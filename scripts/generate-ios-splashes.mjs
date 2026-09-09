@@ -2,8 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
-const background = { r: 11, g: 11, b: 10, alpha: 1 };
-const source = path.resolve("public/logo-mottola-white.png");
+const splashBackground = { r: 11, g: 11, b: 10, alpha: 1 };
+const iconBackground = { r: 255, g: 255, b: 255, alpha: 1 };
+const splashSource = path.resolve("public/logo-mottola-white.png");
+const iconSource = path.resolve("public/logo-mottola-dark.png");
 const destination = path.resolve("public/apple-splash");
 const publicIcon = path.resolve("public/mottola-icon.png");
 const appIcon = path.resolve("src/app/icon.png");
@@ -24,29 +26,30 @@ const screens = [
 ];
 
 await mkdir(destination, { recursive: true });
-const trimmedLogo = await sharp(source).trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+const trimmedSplashLogo = await sharp(splashSource).trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+const trimmedIconLogo = await sharp(iconSource).trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
 
 for (const [name, width, height] of screens) {
   const logoWidth = Math.round(width * 0.52);
-  const logo = await sharp(trimmedLogo).resize({ width: logoWidth, withoutEnlargement: false }).png().toBuffer();
+  const logo = await sharp(trimmedSplashLogo).resize({ width: logoWidth, withoutEnlargement: false }).png().toBuffer();
   const { height: logoHeight = 0 } = await sharp(logo).metadata();
   const left = Math.round((width - logoWidth) / 2);
   const top = Math.round(height * 0.42 - logoHeight / 2);
 
-  await sharp({ create: { width, height, channels: 4, background } })
+  await sharp({ create: { width, height, channels: 4, background: splashBackground } })
     .composite([{ input: logo, left, top }])
     .png({ compressionLevel: 9, adaptiveFiltering: true })
     .toFile(path.join(destination, `${name}.png`));
 }
 
 const iconSize = 512;
-const iconLogoWidth = 390;
-const iconLogo = await sharp(trimmedLogo).resize({ width: iconLogoWidth, withoutEnlargement: false }).png().toBuffer();
+const iconLogoWidth = 350;
+const iconLogo = await sharp(trimmedIconLogo).resize({ width: iconLogoWidth, withoutEnlargement: false }).png().toBuffer();
 const { height: iconLogoHeight = 0 } = await sharp(iconLogo).metadata();
-const icon = await sharp({ create: { width: iconSize, height: iconSize, channels: 4, background } })
+const icon = await sharp({ create: { width: iconSize, height: iconSize, channels: 4, background: iconBackground } })
   .composite([{ input: iconLogo, left: Math.round((iconSize - iconLogoWidth) / 2), top: Math.round((iconSize - iconLogoHeight) / 2) }])
   .png({ compressionLevel: 9, adaptiveFiltering: true })
   .toBuffer();
 
 await Promise.all([writeFile(publicIcon, icon), writeFile(appIcon, icon), writeFile(appleIcon, icon)]);
-console.log(`Generated ${screens.length} iOS launch screens and Mottola's Family app icons`);
+console.log(`Generated ${screens.length} iOS launch screens and Mottolas Family app icons`);

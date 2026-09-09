@@ -10,13 +10,13 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Mottola's Family", template: "%s · Mottola's Family" },
+  title: { default: "Mottolas Family", template: "%s · Mottolas Family" },
   description: "Prenota da Mottola's Family e scopri prodotti e servizi dedicati al tuo stile.",
-  applicationName: "Mottola's Family",
+  applicationName: "Mottolas Family",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Mottola's Family",
+    title: "Mottolas Family",
     startupImage: [
       { url: "/apple-splash/iphone-5.png", media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" },
       { url: "/apple-splash/iphone-se.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" },

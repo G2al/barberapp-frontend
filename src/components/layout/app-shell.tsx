@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/providers/auth-provider";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker";
+import { PushOnboarding } from "@/components/push/push-onboarding";
 import { PushControls } from "@/components/profile/push-panel";
 import { FavoritesMenu } from "@/components/products/favorites-menu";
 import { BrandLoader, type BrandLoaderPhase } from "@/components/ui/brand-loader";
@@ -61,6 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return <div className="mx-auto min-h-dvh w-full max-w-2xl bg-[#0b0b0a] shadow-2xl">
     <ServiceWorkerRegistration />
+    <PushOnboarding userId={user.id} />
     <header className="sticky top-0 z-30 bg-zinc-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
       <div className="flex h-[4.25rem] items-center justify-between gap-3 px-5">
         <Link href="/home" aria-label="Mottola's Family, vai alla home" className="relative h-14 w-36 shrink-0 overflow-hidden"><Image src="/logo-mottola-white.png" alt="Mottola's Family" fill sizes="144px" className="object-contain drop-shadow-[0_5px_14px_rgba(222,219,212,.12)]" /></Link>
