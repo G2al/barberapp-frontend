@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, BellOff, CalendarDays, Home, LogOut, Package, Scissors, UserRound, X } from "lucide-react";
+import { Bell, BellOff, CalendarDays, Home, Package, Scissors, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { LogoutDialog } from "@/components/auth/logout-dialog";
 import { useAuth } from "@/providers/auth-provider";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker";
 import { PushOnboarding } from "@/components/push/push-onboarding";
@@ -31,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const logoutStarted = useRef(false);
   const [logoutPhase, setLogoutPhase] = useState<BrandLoaderPhase>("loading");
   const pushStatus = usePushStatus();
   useEffect(() => { if (!loading && !user) router.replace("/login"); }, [loading, router, user]);
@@ -42,7 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [notificationsOpen]);
 
   async function handleLogout() {
-    if (!window.confirm("Vuoi uscire dal tuo account?")) return;
+    if (logoutStarted.current) return;
+    logoutStarted.current = true;
     setLoggingOut(true);
     setLogoutPhase("loading");
     queryClient.clear();
@@ -69,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex shrink-0 items-center gap-1.5">
           <FavoritesMenu open={favoritesOpen} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(true); }} onClose={() => setFavoritesOpen(false)} />
           <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label={pushStatus.active ? "Notifiche attive. Apri preferenze" : "Notifiche disattivate. Apri preferenze"} aria-haspopup="dialog" className={`relative grid size-10 place-items-center rounded-full border shadow-lg transition duration-300 ${!pushStatus.checked ? "border-white/10 bg-white/[.055] text-zinc-300" : pushStatus.active ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300 shadow-emerald-950/20" : "border-red-300/15 bg-red-400/[.08] text-red-300 shadow-red-950/20"}`}>{pushStatus.active ? <Bell className="size-[1.15rem]" /> : <BellOff className="size-[1.15rem]" />}<motion.span aria-hidden className={`absolute right-0.5 top-0.5 size-2 rounded-full ring-2 ring-zinc-950 ${!pushStatus.checked ? "animate-pulse bg-zinc-500" : pushStatus.active ? "bg-emerald-400" : "bg-red-400"}`} layout /></button>
-          <button onClick={() => void handleLogout()} disabled={loggingOut} aria-label="Esci dall’account" className="grid size-10 place-items-center rounded-full bg-red-400/[.07] text-red-300 shadow-lg transition hover:bg-red-400/15 disabled:opacity-50"><LogOut className="size-[1.15rem]" /></button>
+          <LogoutDialog pending={loggingOut} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(false); }} onConfirm={() => void handleLogout()} />
         </div>
       </div>
     </header>
