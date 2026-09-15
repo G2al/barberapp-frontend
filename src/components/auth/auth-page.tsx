@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { AuthForm } from "./auth-form";
+import { InstallGuide } from "./install-guide";
 
 type AuthMode = "login" | "register" | "forgot" | "reset";
 
@@ -53,6 +54,7 @@ export function AuthPage({
           </header>
           <AuthForm mode={mode} />
         </section>
+        {mode === "login" && <InstallGuide />}
       </div>
     </main>
   );
