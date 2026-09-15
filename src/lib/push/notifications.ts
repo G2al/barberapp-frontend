@@ -1,11 +1,12 @@
 import { api } from "@/lib/api/client";
 import { authStorage } from "@/lib/auth/storage";
-import { clearPushOwner, ownsPush, PUSH_STATUS_EVENT, readPushOwner, savePushOwner } from "./account-state";
+import { clearPushOwner, ownsPush, PUSH_STATUS_EVENT, readPushOwner, savePushOwner, readPushPreference, savePushPreference } from "./account-state";
 
 let verified = "";
 let verification: { key: string; promise: Promise<void> } | null = null;
 let changing = false;
 let generation = 0;
+let detachedSession = "";
 const announce = () => window.dispatchEvent(new Event(PUSH_STATUS_EVENT));
 const sessionKey = () => JSON.stringify([authStorage.getUser()?.id, authStorage.getToken(), generation]);
 
@@ -19,6 +20,7 @@ async function associate(subscription: PushSubscription, session: string) {
     if (response?.status !== true) throw new Error("Il server non ha confermato l’attivazione.");
     if (sessionKey() !== session) throw new Error("Sessione cambiata. Riprova.");
     savePushOwner(String(authStorage.getUser()!.id), subscription.endpoint);
+    savePushPreference(String(authStorage.getUser()!.id), true);
     verified = key;
   })();
   verification = { key, promise };
@@ -28,9 +30,19 @@ async function associate(subscription: PushSubscription, session: string) {
 export async function hasAccountPush(userId: string) {
   if (changing || !authStorage.getToken() || String(authStorage.getUser()?.id) !== userId || Notification.permission !== "granted") return false;
   const session = sessionKey();
+  if (session === detachedSession) return false;
   const registration = await navigator.serviceWorker.getRegistration();
   const subscription = await registration?.pushManager.getSubscription();
-  if (!subscription || !ownsPush(readPushOwner(), userId, subscription.endpoint)) return false;
+  const preference = readPushPreference(userId);
+  if (preference === false) return false;
+  if (!subscription) {
+    // iOS may require a new gesture if the subscription was removed (e.g. offline logout).
+    if (preference === true) {
+      try { localStorage.removeItem(`mottolas:push-prompt-decision:v2:${userId}`); } catch { /* Optional storage. */ }
+    }
+    return false;
+  }
+  if (preference !== true && !ownsPush(readPushOwner(), userId, subscription.endpoint)) return false;
   // Only reconfirm a subscription explicitly enabled by this user, once per session.
   await associate(subscription, session);
   return !changing && sessionKey() === session;
@@ -56,14 +68,17 @@ export async function enablePushNotifications(publicKey: string) {
 export async function disablePushNotifications() {
   if (changing) throw new Error("Attendi il completamento dell’operazione in corso.");
   changing = true;
+  const userId = String(authStorage.getUser()?.id);
   try {
     const registration = await navigator.serviceWorker.getRegistration();
     const subscription = await registration?.pushManager.getSubscription();
     if (subscription) {
       await api("/push/subscriptions", { method: "DELETE", body: { endpoint: subscription.endpoint }, signal: AbortSignal.timeout(6000) });
+      savePushPreference(userId, false);
       clearPushOwner(); verified = "";
       await subscription.unsubscribe();
     }
+    savePushPreference(userId, false);
     clearPushOwner(); verified = "";
   } finally { changing = false; announce(); }
 }
@@ -71,10 +86,11 @@ export async function disablePushNotifications() {
 export async function detachPushOnLogout() {
   const previousOwner = readPushOwner();
   if (previousOwner?.userId === String(authStorage.getUser()?.id)) {
-    // Offer reactivation at the next login after an explicit logout disconnects push.
-    try { localStorage.removeItem(`mottolas:push-prompt-decision:v2:${previousOwner.userId}`); } catch { /* Optional storage. */ }
+    // Migrate already-enabled accounts without conflating logout with opt-out.
+    if (readPushPreference(previousOwner.userId) !== false) savePushPreference(previousOwner.userId, true);
   }
   ++generation;
+  detachedSession = sessionKey();
   verified = ""; clearPushOwner();
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
   changing = true;
@@ -83,8 +99,15 @@ export async function detachPushOnLogout() {
     const registration = await navigator.serviceWorker.getRegistration();
     const subscription = await registration?.pushManager.getSubscription();
     if (subscription) {
-      try { await api("/push/subscriptions", { method: "DELETE", body: { endpoint: subscription.endpoint }, signal: AbortSignal.timeout(6000) }); }
-      finally { await subscription.unsubscribe(); }
+      try {
+        const response = await api<{ status?: boolean }>("/push/subscriptions", { method: "DELETE", body: { endpoint: subscription.endpoint }, signal: AbortSignal.timeout(6000) });
+        if (response?.status !== true) throw new Error("Disconnessione push non confermata.");
+        // Keep the browser subscription, but no backend delivery while logged out.
+        // The consenting account will re-associate it with its new token at login.
+      } catch {
+        // If server detachment fails, revoke locally to avoid notifications from the old account.
+        await subscription.unsubscribe();
+      }
     }
   } catch { /* Logout still completes, including when offline. */ }
   finally { verified = ""; clearPushOwner(); changing = false; announce(); }
