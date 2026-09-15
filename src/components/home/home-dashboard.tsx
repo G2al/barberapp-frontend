@@ -20,7 +20,8 @@ export function HomeDashboard() {
   const now = new Date();
   const next = bookings.data?.bookings.filter((booking) => ["pending", "confirmed"].includes(booking.status) && bookingDate(booking.date, booking.time) >= now).sort((first, second) => +bookingDate(first.date, first.time) - +bookingDate(second.date, second.time))[0];
   const shopPhone = config.data?.phone?.trim() || "";
-  const shopAddress = config.data?.location?.trim() || config.data?.address?.trim() || "";
+  // Confirmed shop address; the backend still returns the placeholder "Via Mottola".
+  const shopAddress = "V. del Plebiscito, 48, 81031 Aversa CE";
   const whatsappPhone = shopPhone.replace(/\D/g, "");
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent("Ciao Mottola's Family, vorrei ricevere alcune informazioni.")}` : "";
   const mapsUrl = shopAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopAddress)}` : "";
