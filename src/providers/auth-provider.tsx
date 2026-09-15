@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { endpoints } from "@/lib/api/endpoints";
 import { authStorage } from "@/lib/auth/storage";
@@ -16,8 +16,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const logoutInProgress = useRef(false);
   const clear = useCallback(() => { authStorage.clear(); setUser(null); }, []);
-  const refreshUser = useCallback(async () => { const data = await endpoints.me(); const next = unwrapUser(data); authStorage.saveUser(next); setUser(next); }, []);
+  const refreshUser = useCallback(async () => { const token = authStorage.getToken(); const data = await endpoints.me(); if (logoutInProgress.current || !token || authStorage.getToken() !== token) return; const next = unwrapUser(data); authStorage.saveUser(next); setUser(next); }, []);
 
   useEffect(() => {
     const token = authStorage.getToken();
@@ -28,12 +29,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [clear, refreshUser]);
   useEffect(() => {
-    const unauthorized = () => { clear(); router.replace("/login?session=expired"); };
+    const unauthorized = () => { clear(); if (!logoutInProgress.current) router.replace("/login?session=expired"); };
     window.addEventListener("mottolas:unauthorized", unauthorized);
     return () => window.removeEventListener("mottolas:unauthorized", unauthorized);
   }, [clear, router]);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout: async () => { try { await detachPushOnLogout(); await endpoints.logout(); } finally { clear(); } } }), [clear, loading, refreshUser, user]);
+  const logout = useCallback(async () => {
+    if (logoutInProgress.current) return;
+    logoutInProgress.current = true;
+    const token = authStorage.getToken();
+    try {
+      await detachPushOnLogout();
+      if (authStorage.getToken() === token) await endpoints.logout();
+    } finally {
+      if (!authStorage.getToken() || authStorage.getToken() === token) clear();
+      logoutInProgress.current = false;
+    }
+  }, [clear]);
+  const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout }), [loading, logout, refreshUser, user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

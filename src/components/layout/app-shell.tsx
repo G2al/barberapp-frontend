@@ -15,6 +15,7 @@ import { PushControls } from "@/components/profile/push-panel";
 import { FavoritesMenu } from "@/components/products/favorites-menu";
 import { BrandLoader, type BrandLoaderPhase } from "@/components/ui/brand-loader";
 import { usePushStatus } from "@/hooks/use-push-status";
+import { runLogoutTransition } from "@/lib/auth/logout-transition";
 
 const items = [
   { href: "/home", label: "Home", icon: Home },
@@ -33,9 +34,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const logoutStarted = useRef(false);
+  const logoutTransition = useRef<AbortController | null>(null);
   const [logoutPhase, setLogoutPhase] = useState<BrandLoaderPhase>("loading");
   const pushStatus = usePushStatus();
-  useEffect(() => { if (!loading && !user) router.replace("/login"); }, [loading, router, user]);
+  useEffect(() => { if (!loading && !user && !loggingOut) router.replace("/login"); }, [loading, loggingOut, router, user]);
+  useEffect(() => () => { logoutTransition.current?.abort(); }, []);
   useEffect(() => {
     if (!notificationsOpen) return;
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") setNotificationsOpen(false); };
@@ -49,15 +52,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setLoggingOut(true);
     setLogoutPhase("loading");
     queryClient.clear();
-    await Promise.all([
-      logout().catch(() => undefined),
-      new Promise((resolve) => window.setTimeout(resolve, 900)),
-    ]);
-    setLogoutPhase("complete");
-    await new Promise((resolve) => window.setTimeout(resolve, 320));
-    setLogoutPhase("exit");
-    await new Promise((resolve) => window.setTimeout(resolve, 440));
-    router.replace("/login");
+    const controller = new AbortController();
+    logoutTransition.current = controller;
+    await runLogoutTransition({ logout, signal: controller.signal, phase: setLogoutPhase, navigate: () => router.replace("/login") });
   }
 
   if (loggingOut) return <BrandLoader label="Chiusura sessione..." completeLabel="A presto" phase={logoutPhase} />;

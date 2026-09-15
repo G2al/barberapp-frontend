@@ -39,7 +39,7 @@ export async function api<T>(endpoint: string, options: Options = {}): Promise<T
   let payload: unknown = null;
   if (text) { try { payload = JSON.parse(text); } catch { payload = text; } }
   if (!response.ok) {
-    if (response.status === 401 && options.auth !== false) {
+    if (response.status === 401 && options.auth !== false && token && authStorage.getToken() === token) {
       authStorage.clear();
       window.dispatchEvent(new Event("mottolas:unauthorized"));
     }
