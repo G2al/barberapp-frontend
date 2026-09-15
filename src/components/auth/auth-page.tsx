@@ -18,9 +18,9 @@ export function AuthPage({
   const compact = mode === "register";
 
   return (
-    <main className="relative min-h-dvh overflow-x-hidden bg-[#0b0b0a]">
+    <main className="relative overflow-x-clip bg-[#0b0b0a]">
       {hasBarberBackground && (
-        <>
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#0b0b0a]">
           <Image
             src="/auth-background.png"
             alt=""
@@ -30,11 +30,11 @@ export function AuthPage({
             fetchPriority="high"
             loading="eager"
           />
-          <div aria-hidden className="absolute inset-0 bg-black/35" />
-        </>
+          <div className="absolute inset-0 bg-black/35" />
+        </div>
       )}
 
-      <div className={cn("relative z-10 mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5", compact ? "py-4" : "py-10")}>
+      <div className={cn("relative z-10 mx-auto flex min-h-[100svh] w-full max-w-md flex-col justify-center px-5 has-[.install-guide]:justify-start", compact ? "py-4" : "py-10")}>
         <div className={cn("relative mx-auto overflow-hidden drop-shadow-[0_12px_32px_rgba(0,0,0,.5)]", compact ? "mb-1 h-16 w-52" : "mb-5 h-28 w-64")}>
           <Image
             src="/logo-mottola-white.png"
