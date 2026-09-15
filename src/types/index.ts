@@ -2,6 +2,7 @@ export type Id = number | string;
 
 export interface User {
   id: Id;
+  role?: string;
   name: string;
   surname?: string | null;
   email: string;
