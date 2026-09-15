@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tan
 import { ArrowLeft, CalendarDays, Check, Clock, Search, Scissors, SunMedium, Sunset, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/providers/auth-provider";
+import { adminNoteError, bookingNotePayload, BOOKING_NOTE_MAX } from "@/lib/booking/admin-note";
 import { endpoints } from "@/lib/api/endpoints";
 import { apiErrorMessage } from "@/lib/api/client";
 import { euro, fullName, italianDate } from "@/lib/format";
@@ -21,26 +23,39 @@ const maxDate = () => { const date = new Date(); date.setMonth(date.getMonth() +
 const visibleDays = () => Array.from({ length: 14 }, (_, index) => { const date = new Date(); date.setDate(date.getDate() + index); return date; });
 
 export function BookingWizard() {
+  const { user } = useAuth();
   const state = useBookingStore();
   const queryClient = useQueryClient();
   const [success, setSuccess] = useState(false);
   const [serviceSearch, setServiceSearch] = useState("");
+  const [note, setNote] = useState("");
+  const [noteReviewed, setNoteReviewed] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const me = useQuery({ queryKey: ["booking-role", user?.id], queryFn: endpoints.me, enabled: !!user, retry: false });
+  const verifiedUser = me.data && ("user" in me.data ? me.data.user : me.data);
+  const roleReady = me.isSuccess && !me.isError && verifiedUser?.id === user?.id;
+  const isAdmin = verifiedUser?.role === "admin";
+  const needsNote = isAdmin && (!noteReviewed || !!adminNoteError(note));
   const staff = useQuery({ queryKey: queryKeys.staff, queryFn: endpoints.staff });
   const services = useQuery({ queryKey: queryKeys.services(state.staff?.id ?? ""), queryFn: () => endpoints.servicesByStaff(state.staff!.id), enabled: Boolean(state.staff) });
   const slots = useQuery({ queryKey: queryKeys.availability(state.staff?.id ?? "", state.date, state.service?.id ?? ""), queryFn: () => endpoints.availability(state.staff!.id, state.date, state.service!.id), enabled: Boolean(state.staff && state.service && state.date) });
   const create = useMutation({
-    mutationFn: () => endpoints.createBooking({ staff_id: state.staff!.id, service_id: state.service!.id, date: state.date, time: state.slot }),
+    mutationFn: () => {
+      if (!roleReady || (isAdmin && !noteReviewed)) throw new Error("Completa i dati prima di confermare.");
+      return endpoints.createBooking({ staff_id: state.staff!.id, service_id: state.service!.id, date: state.date, time: state.slot, ...bookingNotePayload(verifiedUser?.role, note) });
+    },
     onSuccess: async (response) => {
       if (response.booking) queryClient.setQueryData<BookingsResponse>(queryKeys.bookings, (current) => ({ bookings: [response.booking!, ...(current?.bookings ?? []).filter((item) => item.id !== response.booking!.id)] }));
       await queryClient.invalidateQueries({ queryKey: queryKeys.bookings, refetchType: "all" });
       state.reset();
+      setNote(""); setNoteReviewed(false); setNoteError(null);
       setSuccess(true);
     },
   });
 
   if (success) return <motion.div initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} className="py-12 text-center"><span className="mx-auto grid size-20 place-items-center rounded-full bg-emerald-400/10 text-emerald-300"><Check className="size-10" /></span><h1 className="mt-6 text-3xl font-semibold">Prenotazione confermata</h1><p className="mx-auto mt-3 max-w-sm text-zinc-400">Il tuo appuntamento è stato registrato e l’agenda è stata aggiornata.</p><div className="mt-8 grid gap-3"><Link href="/prenotazioni" className="rounded-2xl bg-amber-300 px-5 py-3 font-semibold text-zinc-950">Vai alle prenotazioni</Link><Link href="/home" className="rounded-2xl bg-white/5 px-5 py-3">Torna alla home</Link></div></motion.div>;
 
-  const titles = ["Scegli il professionista", "Scegli il servizio", "Quando vuoi venire?", "Riepilogo prenotazione"];
+  const titles = ["Scegli il professionista", "Scegli il servizio", "Quando vuoi venire?", needsNote ? `Ciao ${verifiedUser?.name ?? ""}, per chi stai prenotando?` : "Riepilogo prenotazione"];
   const sortedServices = [...(services.data ?? [])].sort((a, b) => Number(b.price ?? -1) - Number(a.price ?? -1));
   const normalizedSearch = serviceSearch.trim().toLocaleLowerCase("it");
   const filteredServices = normalizedSearch
@@ -49,13 +64,25 @@ export function BookingWizard() {
   return <>
     <PageTitle eyebrow={`Passaggio ${state.step} di 4`} title={titles[state.step - 1]} description={state.step === 3 ? "Cambia giorno e gli orari si aggiornano subito." : "Pochi passaggi, senza perdere le tue scelte."} />
     <div className="mb-6 grid grid-cols-4 gap-2" aria-label={`Avanzamento: ${state.step} di 4`}>{[1, 2, 3, 4].map((number) => <motion.span key={number} animate={{ opacity: number <= state.step ? 1 : .25 }} className={`h-1 rounded-full ${number <= state.step ? "bg-amber-300" : "bg-white/20"}`} />)}</div>
-    {state.step > 1 && <button onClick={() => state.setStep(state.step - 1)} className="mb-4 flex min-h-11 items-center gap-2 text-sm text-zinc-400"><ArrowLeft className="size-4" />Indietro</button>}
+    {state.step > 1 && <button disabled={create.isPending} onClick={() => { if (state.step === 4 && isAdmin && noteReviewed) setNoteReviewed(false); else { setNoteReviewed(false); state.setStep(state.step - 1); } }} className="mb-4 flex min-h-11 items-center gap-2 text-sm text-zinc-400"><ArrowLeft className="size-4" />Indietro</button>}
     <AnimatePresence mode="wait" initial={false}>
-      <motion.div key={state.step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: .2 }}>
+      <motion.div key={`${state.step}-${state.step === 4 && needsNote ? "note" : "review"}`} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: .2 }}>
         {state.step === 1 && (staff.isPending ? <GridSkeleton /> : staff.isError ? <ErrorState message={apiErrorMessage(staff.error)} retry={() => staff.refetch()} /> : !staff.data?.length ? <EmptyState title="Nessun professionista disponibile" description="Riprova più tardi o contatta Mottola's Family." /> : <div className="grid grid-cols-2 gap-3">{staff.data.map((item, index) => <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }} key={item.id} onClick={() => { setServiceSearch(""); state.setStaff(item); }} className="rounded-[1.75rem] bg-card p-3 text-left shadow-lg ring-1 ring-white/8 transition hover:ring-amber-300/40"><div className="relative aspect-[4/4.3] overflow-hidden rounded-[1.35rem]"><AppImage src={item.image_url} alt={fullName(item)} /></div><p className="mt-3 px-1 font-semibold">{fullName(item)}</p>{item.role && <p className="mt-1 px-1 text-xs text-zinc-500">{item.role}</p>}</motion.button>)}</div>)}
         {state.step === 2 && (services.isPending ? <GridSkeleton /> : services.isError ? <ErrorState message={apiErrorMessage(services.error)} retry={() => services.refetch()} /> : !sortedServices.length ? <EmptyState title="Nessun servizio disponibile" description="Questo professionista non ha servizi prenotabili." /> : <ServiceSelection services={filteredServices} search={serviceSearch} onSearch={setServiceSearch} onSelect={state.setService} />)}
         {state.step === 3 && <DateAndTime state={state} slots={slots} />}
-        {state.step === 4 && state.staff && state.service && <><Card className="overflow-hidden p-0"><div className="relative h-48"><AppImage src={state.staff.image_url} alt={fullName(state.staff)} sizes="640px" className="object-cover" /><div className="absolute inset-0 bg-zinc-950/55" /><div className="absolute inset-x-0 bottom-0 p-5"><p className="text-xs uppercase tracking-[.18em] text-amber-300">Il tuo professionista</p><h2 className="mt-1 text-2xl font-semibold">{fullName(state.staff)}</h2></div></div><div className="grid grid-cols-2 gap-px bg-white/5"><SummaryCell icon={<Scissors />} label="Servizio" value={state.service.name} /><SummaryCell icon={<CalendarDays />} label="Data" value={italianDate(state.date, { day: "numeric", month: "long" })} /><SummaryCell icon={<Clock />} label="Orario" value={state.slot.slice(0, 5)} /><SummaryCell icon={<UserRound />} label="Durata e prezzo" value={`${state.service.duration} min · ${euro(state.service.price)}`} /></div></Card>{create.error && <div className="mt-4"><ErrorState message={`${apiErrorMessage(create.error)} Aggiorna gli orari se lo slot non è più libero.`} retry={() => { create.reset(); state.setStep(3); void slots.refetch(); }} /></div>}<Button disabled={create.isPending} onClick={() => create.mutate()} className="mt-5 h-14 w-full rounded-2xl text-base">{create.isPending ? "Conferma in corso…" : "Conferma prenotazione"}</Button></>}
+        {state.step === 4 && !roleReady && (me.isError ? <ErrorState message="Non è stato possibile verificare il tuo account. Riprova prima di confermare." retry={() => me.refetch()} /> : <Skeleton className="h-40" />)}
+        {state.step === 4 && roleReady && needsNote && <Card>
+          <form onSubmit={event => { event.preventDefault(); const error = adminNoteError(note); setNoteError(error); if (!error) setNoteReviewed(true); }} className="space-y-4">
+            <div><label htmlFor="booking-admin-note" className="mb-2 block font-semibold">Per chi stai prenotando? <span className="text-xs font-normal text-zinc-400">Obbligatorio</span></label>
+              <p id="booking-note-help" className="mb-3 text-sm text-zinc-400">Scrivi il nome della persona ed eventuali indicazioni utili. Il testo verrà salvato nelle note della prenotazione.</p>
+              <textarea id="booking-admin-note" required rows={4} maxLength={BOOKING_NOTE_MAX} value={note} onChange={event => { setNote(event.target.value); setNoteError(null); setNoteReviewed(false); }} aria-invalid={!!noteError} aria-describedby={`booking-note-help booking-note-count${noteError ? " booking-note-error" : ""}`} placeholder="Es. Mario Rossi, preferisce un taglio corto…" className="w-full resize-y rounded-2xl border border-white/10 bg-white/5 p-4 text-base outline-none focus:border-amber-300" />
+              <p id="booking-note-count" className="mt-1 text-right text-xs text-zinc-500">{note.length}/{BOOKING_NOTE_MAX} caratteri</p>
+              {noteError && <p id="booking-note-error" role="alert" className="mt-2 text-sm text-red-300">{noteError}</p>}
+            </div>
+            <Button type="submit" className="h-12 w-full rounded-2xl">Continua al riepilogo</Button>
+          </form>
+        </Card>}
+        {state.step === 4 && roleReady && !needsNote && state.staff && state.service && <><Card className="overflow-hidden p-0"><div className="relative h-48"><AppImage src={state.staff.image_url} alt={fullName(state.staff)} sizes="640px" className="object-cover" /><div className="absolute inset-0 bg-zinc-950/55" /><div className="absolute inset-x-0 bottom-0 p-5"><p className="text-xs uppercase tracking-[.18em] text-amber-300">Il tuo professionista</p><h2 className="mt-1 text-2xl font-semibold">{fullName(state.staff)}</h2></div></div><div className="grid grid-cols-2 gap-px bg-white/5"><SummaryCell icon={<Scissors />} label="Servizio" value={state.service.name} /><SummaryCell icon={<CalendarDays />} label="Data" value={italianDate(state.date, { day: "numeric", month: "long" })} /><SummaryCell icon={<Clock />} label="Orario" value={state.slot.slice(0, 5)} /><SummaryCell icon={<UserRound />} label="Durata e prezzo" value={`${state.service.duration} min · ${euro(state.service.price)}`} /></div>{isAdmin && <div className="border-t border-white/10 p-5"><p className="text-xs uppercase tracking-wider text-amber-300">Per chi stai prenotando</p><p className="mt-2 whitespace-pre-wrap break-words text-sm">{note.trim()}</p><button type="button" disabled={create.isPending} onClick={() => setNoteReviewed(false)} className="mt-3 text-sm text-amber-300 underline">Modifica nota</button></div>}</Card>{create.error && <div className="mt-4"><ErrorState message={`${apiErrorMessage(create.error)} Aggiorna gli orari se lo slot non è più libero.`} retry={() => { create.reset(); state.setStep(3); void slots.refetch(); }} /></div>}<Button disabled={create.isPending || !roleReady || (isAdmin && !!adminNoteError(note))} onClick={() => { if (!create.isPending) create.mutate(); }} className="mt-5 h-14 w-full rounded-2xl text-base">{create.isPending ? "Conferma in corso…" : "Conferma prenotazione"}</Button></>}
       </motion.div>
     </AnimatePresence>
   </>;

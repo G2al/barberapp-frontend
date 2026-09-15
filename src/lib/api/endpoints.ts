@@ -46,7 +46,7 @@ export const endpoints = {
     }
     return { bookings: normalizeBookings(response.data ?? []) } satisfies BookingsResponse;
   },
-  createBooking: async (body: { staff_id: string | number; service_id: string | number; date: string; time: string }) => {
+  createBooking: async (body: { staff_id: string | number; service_id: string | number; date: string; time: string; note?: string }) => {
     const response = await api<{ status?: boolean; booking?: RawBooking; message?: string }>("/bookings", { method: "POST", body });
     return { ...response, booking: response.booking ? normalizeBooking(response.booking) : undefined };
   },
