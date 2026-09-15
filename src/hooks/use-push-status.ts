@@ -1,73 +1,43 @@
 "use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/providers/auth-provider";
+import { hasAccountPush } from "@/lib/push/notifications";
+import { PUSH_STATUS_EVENT } from "@/lib/push/account-state";
 
-import { useCallback, useEffect, useState } from "react";
-
-const PUSH_STATUS_EVENT = "mottolas:push-status";
-
-type PushStatus = {
-  active: boolean;
-  checked: boolean;
-  permission: NotificationPermission;
-  supported: boolean;
-};
-
+type PushStatus = { active: boolean; checked: boolean; permission: NotificationPermission; supported: boolean; userId: string };
 export function usePushStatus() {
-  const [status, setStatus] = useState<PushStatus>({
-    active: false,
-    checked: false,
-    permission: "default",
-    supported: false,
-  });
-
+  const { user } = useAuth();
+  const userId = user ? String(user.id) : "";
+  const sequence = useRef(0);
+  const invalidate = useCallback(() => { sequence.current += 1; }, []);
+  const [status, setStatus] = useState<PushStatus>({ active: false, checked: false, permission: "default", supported: false, userId: "" });
   const refresh = useCallback(async () => {
+    const request = ++sequence.current;
     const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-    if (!supported) {
-      setStatus({ active: false, checked: true, permission: "default", supported: false });
-      return;
-    }
-
-    const permission = Notification.permission;
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      setStatus({ active: permission === "granted" && Boolean(subscription), checked: true, permission, supported: true });
-    } catch {
-      setStatus({ active: false, checked: true, permission, supported: true });
-    }
-  }, []);
-
+    const permission = supported ? Notification.permission : "default";
+    let active = false;
+    try { if (supported && userId) active = await hasAccountPush(userId); } catch { /* Failed checks never show green. */ }
+    if (request === sequence.current) setStatus({ active, checked: true, supported, permission, userId });
+  }, [userId]);
   useEffect(() => {
-    const initialCheck = window.setTimeout(() => void refresh(), 0);
-    const handleStatus = (event: Event) => {
-      const active = (event as CustomEvent<boolean>).detail;
-      setStatus((current) => ({
-        ...current,
-        active,
-        checked: true,
-        permission: "Notification" in window ? Notification.permission : current.permission,
-      }));
-    };
-    const handleVisibility = () => { if (document.visibilityState === "visible") void refresh(); };
-    window.addEventListener(PUSH_STATUS_EVENT, handleStatus);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", handleVisibility);
+    const initial = window.setTimeout(() => void refresh(), 0);
+    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
+    const update = () => void refresh();
+    window.addEventListener(PUSH_STATUS_EVENT, update);
+    window.addEventListener("focus", update);
+    window.addEventListener("pageshow", update);
+    window.addEventListener("storage", update);
+    document.addEventListener("visibilitychange", visible);
+    navigator.serviceWorker?.addEventListener("controllerchange", update);
     return () => {
-      window.clearTimeout(initialCheck);
-      window.removeEventListener(PUSH_STATUS_EVENT, handleStatus);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", handleVisibility);
+      invalidate(); window.clearTimeout(initial);
+      window.removeEventListener(PUSH_STATUS_EVENT, update);
+      window.removeEventListener("focus", update);
+      window.removeEventListener("pageshow", update);
+      window.removeEventListener("storage", update);
+      document.removeEventListener("visibilitychange", visible);
+      navigator.serviceWorker?.removeEventListener("controllerchange", update);
     };
-  }, [refresh]);
-
-  const setActive = useCallback((active: boolean) => {
-    setStatus((current) => ({
-      ...current,
-      active,
-      checked: true,
-      permission: "Notification" in window ? Notification.permission : current.permission,
-    }));
-    window.dispatchEvent(new CustomEvent<boolean>(PUSH_STATUS_EVENT, { detail: active }));
-  }, []);
-
-  return { ...status, refresh, setActive };
+  }, [refresh, invalidate]);
+  return { ...status, active: status.userId === userId && status.active, checked: status.userId === userId && status.checked, refresh };
 }

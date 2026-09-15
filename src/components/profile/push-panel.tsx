@@ -13,7 +13,7 @@ import { Card, ErrorState, Skeleton } from "@/components/ui/primitives";
 
 export function PushControls({ compact = false }: { compact?: boolean }) {
   const config = useQuery({ queryKey: queryKeys.push, queryFn: endpoints.pushConfig });
-  const { active, checked, permission, refresh, setActive, supported } = usePushStatus();
+  const { active, checked, permission, refresh, supported } = usePushStatus();
   const [message, setMessage] = useState("");
 
   const enable = useMutation({
@@ -22,13 +22,13 @@ export function PushControls({ compact = false }: { compact?: boolean }) {
       await enablePushNotifications(config.data!.public_key!);
       await refresh();
     },
-    onSuccess: () => { setActive(true); setMessage("Notifiche attivate."); },
+    onSuccess: () => { setMessage("Notifiche attivate per il tuo account."); },
   });
   const disable = useMutation({
     mutationFn: async () => {
       await disablePushNotifications();
     },
-    onSuccess: () => { setActive(false); setMessage("Notifiche disattivate."); },
+    onSuccess: () => { void refresh(); setMessage("Notifiche disattivate."); },
   });
 
   return <div>

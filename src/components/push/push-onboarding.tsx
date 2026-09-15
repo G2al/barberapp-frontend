@@ -6,21 +6,25 @@ import { BellRing, Check, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { endpoints } from "@/lib/api/endpoints";
 import { enablePushNotifications } from "@/lib/push/notifications";
+import { shouldOfferPush } from "@/lib/push/account-state";
 import { queryKeys } from "@/lib/query/keys";
 import { usePushStatus } from "@/hooks/use-push-status";
 import type { Id } from "@/types";
 
-const storageKey = (userId: Id) => `mottolas:push-prompt-seen:${userId}`;
+const storageKey = (userId: Id) => `mottolas:push-prompt-decision:v2:${userId}`;
 
 export function PushOnboarding({ userId }: { userId: Id }) {
   const config = useQuery({ queryKey: queryKeys.push, queryFn: endpoints.pushConfig });
-  const { active, checked, permission, setActive, supported, refresh } = usePushStatus();
+  const { active, checked, permission, supported, refresh } = usePushStatus();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const notNowRef = useRef<HTMLButtonElement>(null);
+  const decided = useRef(false);
+  const sending = useRef(false);
 
   const markSeen = useCallback(() => {
+    decided.current = true;
     try { window.localStorage.setItem(storageKey(userId), "true"); } catch { /* Lo stato locale non è essenziale per il funzionamento push. */ }
   }, [userId]);
 
@@ -30,10 +34,29 @@ export function PushOnboarding({ userId }: { userId: Id }) {
   }, [markSeen]);
 
   useEffect(() => {
-    if (open || !checked || !supported || active || permission !== "default" || !config.data?.enabled || !config.data.public_key) return;
-    try { if (window.localStorage.getItem(storageKey(userId))) return; } catch { return; }
-    const timer = window.setTimeout(() => setOpen(true), 650);
-    return () => window.clearTimeout(timer);
+    let savedDecision = decided.current;
+    try { savedDecision ||= !!window.localStorage.getItem(storageKey(userId)); } catch { /* Still offer the prompt if storage is blocked. */ }
+    if (open || !shouldOfferPush({ checked, supported, active, permission, enabled: !!config.data?.enabled && !!config.data.public_key, decided: savedDecision })) return;
+    let timer: number | undefined;
+    const schedule = () => {
+      window.clearTimeout(timer);
+      if (document.visibilityState !== "visible") return;
+      timer = window.setTimeout(() => {
+        if (!decided.current && document.visibilityState === "visible" && document.hasFocus()) setOpen(true);
+      }, 900);
+    };
+    schedule();
+    window.addEventListener("focus", schedule);
+    window.addEventListener("pageshow", schedule);
+    window.addEventListener("pointerup", schedule);
+    document.addEventListener("visibilitychange", schedule);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", schedule);
+      window.removeEventListener("pageshow", schedule);
+      window.removeEventListener("pointerup", schedule);
+      document.removeEventListener("visibilitychange", schedule);
+    };
   }, [active, checked, config.data, open, permission, supported, userId]);
 
   useEffect(() => {
@@ -45,19 +68,20 @@ export function PushOnboarding({ userId }: { userId: Id }) {
   }, [dismiss, open, pending]);
 
   async function enable() {
-    if (pending || !config.data?.public_key) return;
+    if (sending.current || pending || !config.data?.public_key) return;
+    sending.current = true;
     setPending(true);
     setError("");
-    markSeen();
     try {
       await enablePushNotifications(config.data.public_key);
       await refresh();
-      setActive(true);
+      markSeen();
       setOpen(false);
     } catch (cause) {
       await refresh();
       setError(cause instanceof Error ? cause.message : "Non è stato possibile attivare le notifiche.");
     } finally {
+      sending.current = false;
       setPending(false);
     }
   }

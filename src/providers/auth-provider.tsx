@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useRouter } from "next/navigation";
 import { endpoints } from "@/lib/api/endpoints";
 import { authStorage } from "@/lib/auth/storage";
+import { detachPushOnLogout } from "@/lib/push/notifications";
 import type { AuthResponse, User } from "@/types";
 
 type AuthContextValue = { user: User | null; loading: boolean; setSession: (response: AuthResponse) => void; refreshUser: () => Promise<void>; logout: () => Promise<void> };
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("mottolas:unauthorized", unauthorized);
   }, [clear, router]);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout: async () => { try { await endpoints.logout(); } finally { clear(); } } }), [clear, loading, refreshUser, user]);
+  const value = useMemo<AuthContextValue>(() => ({ user, loading, setSession: (response) => { authStorage.save(response.token, response.user); setUser(response.user); }, refreshUser, logout: async () => { try { await detachPushOnLogout(); await endpoints.logout(); } finally { clear(); } } }), [clear, loading, refreshUser, user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
