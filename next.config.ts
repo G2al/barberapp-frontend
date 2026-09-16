@@ -19,6 +19,12 @@ const nextConfig: NextConfig = {
         pathname: "/**",
         search: "",
       },
+      {
+        protocol: "https",
+        hostname: "admin.gabrieledelpianobarber.it",
+        pathname: "/storage/**",
+        search: "",
+      },
     ],
   },
 };
