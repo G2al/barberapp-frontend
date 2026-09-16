@@ -1,9 +1,9 @@
-export const PUSH_STATUS_EVENT = "mottolas:push-status";
-const OWNER_KEY = "mottolas:push-owner:v1";
+export const PUSH_STATUS_EVENT = "delpiano:push-status";
+const OWNER_KEY = "delpiano:push-owner:v1";
 type Owner = { userId: string; endpoint: string };
 let memoryOwner: Owner | null = null;
 const preferences = new Map<string, boolean>();
-const preferenceKey = (userId: string) => `mottolas:push-enabled:v1:${userId}`;
+const preferenceKey = (userId: string) => `delpiano:push-enabled:v1:${userId}`;
 export function readPushPreference(userId: string): boolean | null {
   try { const value = localStorage.getItem(preferenceKey(userId)); return value === "true" ? true : value === "false" ? false : null; }
   catch { return preferences.get(userId) ?? null; }

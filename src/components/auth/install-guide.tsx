@@ -44,7 +44,7 @@ export function InstallGuide() {
     <header>
       <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-amber-300">Portala sempre con te</p>
       <h2 id="install-guide-title" className="mt-1.5 text-lg font-semibold">Come installare la nostra app</h2>
-      <p className="mt-1 text-xs leading-5 text-zinc-400">Con quale browser hai aperto Mottolas Family?</p>
+      <p className="mt-1 text-xs leading-5 text-zinc-400">Con quale browser hai aperto Del Piano Luxury?</p>
     </header>
 
     <div role="tablist" aria-label="Scegli il browser" className="mt-4 grid grid-cols-3 gap-2">
@@ -71,7 +71,7 @@ export function InstallGuide() {
 
     <div className="mt-4 space-y-2">
       <Faq title="Cos’è un browser?">È l’app che usi per aprire un sito internet, come Safari, Chrome o Edge.</Faq>
-      <Faq title="Perché installare da qui?">Mottolas Family è una Progressive Web App: occupa poco spazio, si aggiorna automaticamente e si apre come un’app normale.</Faq>
+      <Faq title="Perché installare da qui?">Del Piano Luxury è una Progressive Web App: occupa poco spazio, si aggiorna automaticamente e si apre come un’app normale.</Faq>
       <Faq title="La PWA è un’app vera?">Sì. Dopo averla aggiunta alla schermata Home puoi aprirla direttamente come una normale applicazione.</Faq>
       <Faq title="Devo aggiornarla manualmente?">No. La versione più recente viene caricata automaticamente.</Faq>
     </div>
@@ -81,7 +81,7 @@ export function InstallGuide() {
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#25D366] text-zinc-950"><MessageCircle className="size-5" /></span>
         <div className="min-w-0"><p className="text-sm font-semibold">Hai difficoltà?</p><p className="mt-1 text-xs leading-5 text-zinc-400">Contattami su WhatsApp: risolveremo il tuo problema in meno di un secondo.</p></div>
       </div>
-      <a href={`https://wa.me/393296430362?text=${encodeURIComponent("Ciao, ho bisogno di aiuto per installare l'app Mottolas Family.")}`} target="_blank" rel="noreferrer" className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-zinc-950 transition hover:brightness-105"><MessageCircle className="size-4" />Scrivimi su WhatsApp</a>
+      <a href={`https://wa.me/393296430362?text=${encodeURIComponent("Ciao, ho bisogno di aiuto per installare l'app Del Piano Luxury.")}`} target="_blank" rel="noreferrer" className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-zinc-950 transition hover:brightness-105"><MessageCircle className="size-4" />Scrivimi su WhatsApp</a>
     </div>
   </motion.section>;
 }

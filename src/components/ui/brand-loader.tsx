@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 export type BrandLoaderPhase = "loading" | "complete" | "exit";
 
 export function BrandLoader({
-  label = "Apertura Mottola's Family...",
+  label = "Apertura Del Piano Luxury...",
   completeLabel = "Pronto",
   phase = "loading",
 }: {
@@ -37,13 +37,13 @@ export function BrandLoader({
           initial={{ opacity: 0, scale: 0.84, y: 10 }}
           animate={{ opacity: 1, scale: isReady ? 1.035 : 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="relative h-36 w-72 overflow-hidden drop-shadow-[0_14px_38px_rgba(215,212,204,.14)]"
+          className="relative mb-5 size-44"
         >
           <Image
-            src="/logo-mottola-white.png"
-            alt="Mottola's Family"
+            src="/del-piano-logo.png"
+            alt="Del Piano Luxury"
             fill
-            sizes="288px"
+            sizes="176px"
             className="object-contain"
             fetchPriority="high"
             loading="eager"
@@ -59,7 +59,7 @@ export function BrandLoader({
           aria-valuenow={isReady ? 100 : undefined}
         >
           <motion.div
-            className="h-full rounded-full bg-amber-300 shadow-[0_0_14px_rgba(215,212,204,.45)]"
+            className="h-full rounded-full bg-amber-300 shadow-[0_0_14px_rgba(217,165,33,.45)]"
             initial={{ width: "4%" }}
             animate={{ width: isReady ? "100%" : "82%" }}
             transition={{ duration: isReady ? 0.3 : 1.15, ease: [0.22, 1, 0.36, 1] }}

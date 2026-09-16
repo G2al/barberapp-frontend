@@ -38,7 +38,7 @@ export async function hasAccountPush(userId: string) {
   if (!subscription) {
     // iOS may require a new gesture if the subscription was removed (e.g. offline logout).
     if (preference === true) {
-      try { localStorage.removeItem(`mottolas:push-prompt-decision:v2:${userId}`); } catch { /* Optional storage. */ }
+      try { localStorage.removeItem(`delpiano:push-prompt-decision:v2:${userId}`); } catch { /* Optional storage. */ }
     }
     return false;
   }

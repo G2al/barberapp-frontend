@@ -10,13 +10,13 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Mottolas Family", template: "%s · Mottolas Family" },
-  description: "Prenota da Mottola's Family e scopri prodotti e servizi dedicati al tuo stile.",
-  applicationName: "Mottolas Family",
+  title: { default: "Del Piano Luxury", template: "%s · Del Piano Luxury" },
+  description: "Prenota da Del Piano Luxury e scopri prodotti e servizi dedicati al tuo stile.",
+  applicationName: "Del Piano Luxury",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Mottolas Family",
+    title: "Del Piano Luxury",
     startupImage: [
       { url: "/apple-splash/iphone-5.png", media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" },
       { url: "/apple-splash/iphone-se.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" },

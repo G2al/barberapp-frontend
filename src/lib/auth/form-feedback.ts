@@ -1,4 +1,4 @@
-// Aligned with mottolastyle's AuthController (register and resetPassword).
+// Aligned with Del Piano's AuthController (register and resetPassword).
 export const PASSWORD_MIN_LENGTH = 6;
 export const authFields = ["name", "surname", "email", "phone", "password", "password_confirmation"] as const;
 export type AuthField = typeof authFields[number];
@@ -37,7 +37,7 @@ export function authErrorFeedback(status: number, payload: unknown, mode: string
   const messages: Record<number, string> = {
     0: "Impossibile contattare il server. Controlla la connessione e riprova.",
     401: "Email o password non corrette. Riprova.",
-    403: "Il tuo account è disattivato. Contatta Mottola's Family per assistenza.",
+    403: "Il tuo account è disattivato. Contatta Del Piano Luxury per assistenza.",
     419: "La sessione è scaduta. Ricarica la pagina e riprova.",
     429: "Troppi tentativi. Attendi qualche minuto prima di riprovare.",
   };

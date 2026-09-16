@@ -11,7 +11,7 @@ import { queryKeys } from "@/lib/query/keys";
 import { usePushStatus } from "@/hooks/use-push-status";
 import type { Id } from "@/types";
 
-const storageKey = (userId: Id) => `mottolas:push-prompt-decision:v2:${userId}`;
+const storageKey = (userId: Id) => `delpiano:push-prompt-decision:v2:${userId}`;
 
 export function PushOnboarding({ userId }: { userId: Id }) {
   const config = useQuery({ queryKey: queryKeys.push, queryFn: endpoints.pushConfig });
@@ -90,10 +90,10 @@ export function PushOnboarding({ userId }: { userId: Id }) {
     <motion.div aria-hidden className="absolute inset-0 bg-black/75 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
     <motion.section role="dialog" aria-modal="true" aria-labelledby="push-onboarding-title" aria-describedby="push-onboarding-description" initial={{ opacity: 0, y: 28, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: .98 }} transition={{ type: "spring", stiffness: 340, damping: 30 }} className="relative w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900 p-6 shadow-[0_28px_90px_rgba(0,0,0,.65)]">
       <div className="absolute inset-x-8 top-0 h-px bg-amber-300/70" />
-      <span className="grid size-14 place-items-center rounded-2xl bg-amber-300 text-zinc-950 shadow-[0_12px_35px_rgba(215,212,204,.16)]"><BellRing className="size-7" /></span>
+      <span className="grid size-14 place-items-center rounded-2xl bg-amber-300 text-zinc-950 shadow-[0_12px_35px_rgba(217,165,33,.16)]"><BellRing className="size-7" /></span>
       <p className="mt-5 text-[10px] font-semibold uppercase tracking-[.2em] text-amber-300">Rimani aggiornato</p>
       <h2 id="push-onboarding-title" className="mt-2 text-2xl font-semibold tracking-tight">Attiva le notifiche</h2>
-      <p id="push-onboarding-description" className="mt-3 text-sm leading-6 text-zinc-400">Ricevi conferme, aggiornamenti e promemoria dei tuoi appuntamenti da Mottola&apos;s Family.</p>
+      <p id="push-onboarding-description" className="mt-3 text-sm leading-6 text-zinc-400">Ricevi conferme, aggiornamenti e promemoria dei tuoi appuntamenti da Del Piano Luxury.</p>
       <div className="mt-5 space-y-2 text-sm text-zinc-300">
         <p className="flex items-center gap-2"><Check className="size-4 text-amber-300" />Promemoria degli appuntamenti</p>
         <p className="flex items-center gap-2"><ShieldCheck className="size-4 text-amber-300" />Potrai disattivarle in qualsiasi momento</p>

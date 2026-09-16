@@ -67,5 +67,26 @@ export interface AppConfig {
 export interface AuthResponse { status: boolean; token: string; user: User; message?: string }
 export interface BookingsResponse { status?: boolean; bookings: Booking[] }
 export interface ProductsResponse { status?: boolean; products: Product[] }
-export interface AvailabilityResponse { status?: boolean; slots: string[]; service_duration?: number }
+export interface AvailabilityResponse {
+  status?: boolean;
+  slots: string[];
+  waitlist_slots?: string[];
+  service_duration?: number;
+  date?: string;
+  staff_id?: Id;
+}
+
+export type WaitlistStatus = "waiting" | "assigned";
+export interface WaitlistEntry {
+  id: Id;
+  staff: { id: Id; name: string };
+  service: { id: Id; name: string };
+  date: string;
+  time: string;
+  status: WaitlistStatus;
+  position?: number | null;
+  booking_id?: Id | null;
+}
+export interface WaitlistResponse { status?: boolean; entries: WaitlistEntry[] }
+export interface WaitlistCreateResponse { status?: boolean; message?: string; entry: WaitlistEntry }
 export interface PushConfig { enabled: boolean; public_key?: string }

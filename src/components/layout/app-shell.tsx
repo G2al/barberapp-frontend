@@ -16,6 +16,8 @@ import { FavoritesMenu } from "@/components/products/favorites-menu";
 import { BrandLoader, type BrandLoaderPhase } from "@/components/ui/brand-loader";
 import { usePushStatus } from "@/hooks/use-push-status";
 import { runLogoutTransition } from "@/lib/auth/logout-transition";
+import { endpoints } from "@/lib/api/endpoints";
+import { queryKeys } from "@/lib/query/keys";
 
 const items = [
   { href: "/home", label: "Home", icon: Home },
@@ -45,6 +47,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [notificationsOpen]);
+  useEffect(() => {
+    if (!user) return;
+    const refreshAppointments = () => {
+      if (document.visibilityState !== "visible") return;
+      void Promise.allSettled([
+        queryClient.fetchQuery({ queryKey: queryKeys.bookings, queryFn: endpoints.bookings, staleTime: 0 }),
+        queryClient.fetchQuery({ queryKey: queryKeys.waitlist, queryFn: endpoints.waitlist, staleTime: 0 }),
+      ]);
+    };
+    const onMessage = (event: MessageEvent) => { if (event.data?.type === "REFRESH_APPOINTMENTS") refreshAppointments(); };
+    window.addEventListener("focus", refreshAppointments);
+    window.addEventListener("pageshow", refreshAppointments);
+    document.addEventListener("visibilitychange", refreshAppointments);
+    navigator.serviceWorker?.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("focus", refreshAppointments);
+      window.removeEventListener("pageshow", refreshAppointments);
+      document.removeEventListener("visibilitychange", refreshAppointments);
+      navigator.serviceWorker?.removeEventListener("message", onMessage);
+    };
+  }, [queryClient, user]);
 
   async function handleLogout() {
     if (logoutStarted.current) return;
@@ -65,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <PushOnboarding key={user.id} userId={user.id} />
     <header className="sticky top-0 z-30 bg-zinc-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
       <div className="flex h-[4.25rem] items-center justify-between gap-3 px-5">
-        <Link href="/home" aria-label="Mottola's Family, vai alla home" className="relative h-14 w-36 shrink-0 overflow-hidden"><Image src="/logo-mottola-white.png" alt="Mottola's Family" fill sizes="144px" className="object-contain drop-shadow-[0_5px_14px_rgba(222,219,212,.12)]" /></Link>
+        <Link href="/home" aria-label="Del Piano Luxury, vai alla home" className="relative size-14 shrink-0"><Image src="/del-piano-logo.png" alt="Del Piano Luxury" fill sizes="56px" className="object-contain" /></Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <FavoritesMenu open={favoritesOpen} onOpen={() => { setNotificationsOpen(false); setFavoritesOpen(true); }} onClose={() => setFavoritesOpen(false)} />
           <button onClick={() => { setFavoritesOpen(false); setNotificationsOpen(true); }} aria-label={pushStatus.active ? "Notifiche attive. Apri preferenze" : "Notifiche disattivate. Apri preferenze"} aria-haspopup="dialog" className={`relative grid size-10 place-items-center rounded-full border shadow-lg transition duration-300 ${!pushStatus.checked ? "border-white/10 bg-white/[.055] text-zinc-300" : pushStatus.active ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300 shadow-emerald-950/20" : "border-red-300/15 bg-red-400/[.08] text-red-300 shadow-red-950/20"}`}>{pushStatus.active ? <Bell className="size-[1.15rem]" /> : <BellOff className="size-[1.15rem]" />}<motion.span aria-hidden className={`absolute right-0.5 top-0.5 size-2 rounded-full ring-2 ring-zinc-950 ${!pushStatus.checked ? "animate-pulse bg-zinc-500" : pushStatus.active ? "bg-emerald-400" : "bg-red-400"}`} layout /></button>

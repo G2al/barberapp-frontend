@@ -30,8 +30,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [clear, refreshUser]);
   useEffect(() => {
     const unauthorized = () => { clear(); if (!logoutInProgress.current) router.replace("/login?session=expired"); };
-    window.addEventListener("mottolas:unauthorized", unauthorized);
-    return () => window.removeEventListener("mottolas:unauthorized", unauthorized);
+    window.addEventListener("delpiano:unauthorized", unauthorized);
+    return () => window.removeEventListener("delpiano:unauthorized", unauthorized);
   }, [clear, router]);
 
   const logout = useCallback(async () => {

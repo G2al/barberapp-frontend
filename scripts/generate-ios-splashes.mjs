@@ -4,10 +4,10 @@ import sharp from "sharp";
 
 const splashBackground = { r: 11, g: 11, b: 10, alpha: 1 };
 const iconBackground = { r: 255, g: 255, b: 255, alpha: 1 };
-const splashSource = path.resolve("public/logo-mottola-white.png");
-const iconSource = path.resolve("public/logo-mottola-dark.png");
+const splashSource = path.resolve("public/del-piano-logo.png");
+const iconSource = path.resolve("public/del-piano-logo.png");
 const destination = path.resolve("public/apple-splash");
-const publicIcon = path.resolve("public/mottola-icon.png");
+const publicIcon = path.resolve("public/del-piano-icon.png");
 const appIcon = path.resolve("src/app/icon.png");
 const appleIcon = path.resolve("src/app/apple-icon.png");
 
@@ -52,4 +52,4 @@ const icon = await sharp({ create: { width: iconSize, height: iconSize, channels
   .toBuffer();
 
 await Promise.all([writeFile(publicIcon, icon), writeFile(appIcon, icon), writeFile(appleIcon, icon)]);
-console.log(`Generated ${screens.length} iOS launch screens and Mottolas Family app icons`);
+console.log(`Generated ${screens.length} iOS launch screens and Del Piano Luxury app icons`);

@@ -1,6 +1,6 @@
 import { authStorage } from "@/lib/auth/storage";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://admin.mottolasfamily.it/api").replace(/\/$/, "");
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
 
 export class ApiError<T = unknown> extends Error {
   constructor(public status: number, public payload: T, message: string) { super(message); this.name = "ApiError"; }
@@ -41,7 +41,7 @@ export async function api<T>(endpoint: string, options: Options = {}): Promise<T
   if (!response.ok) {
     if (response.status === 401 && options.auth !== false && token && authStorage.getToken() === token) {
       authStorage.clear();
-      window.dispatchEvent(new Event("mottolas:unauthorized"));
+      window.dispatchEvent(new Event("delpiano:unauthorized"));
     }
     throw new ApiError(response.status, payload, messageFrom(payload, response.status));
   }

@@ -1,6 +1,6 @@
 import { api } from "./client";
 import { normalizeBookingDate } from "@/lib/format";
-import type { AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, Product, ProductsResponse, PushConfig, Service, Staff, User } from "@/types";
+import type { AppConfig, AuthResponse, AvailabilityResponse, Booking, BookingsResponse, Product, ProductsResponse, PushConfig, Service, Staff, User, WaitlistCreateResponse, WaitlistResponse } from "@/types";
 
 type RawBooking = Omit<Booking, "staff" | "service"> & {
   staff?: Booking["staff"] | string;
@@ -36,7 +36,7 @@ export const endpoints = {
   config: () => api<AppConfig>("/app-config", { auth: false }),
   staff: () => api<Staff[]>("/staff", { auth: false }),
   servicesByStaff: (id: string | number) => api<Service[]>(`/services/by-staff/${id}`, { auth: false }),
-  availability: (staff: string | number, date: string, service: string | number) => api<AvailabilityResponse>(`/availability/${staff}?date=${encodeURIComponent(date)}&serviceId=${encodeURIComponent(service)}`, { auth: false }),
+  availability: (staff: string | number, date: string, service: string | number) => api<AvailabilityResponse>(`/availability/${staff}?date=${encodeURIComponent(date)}&serviceId=${encodeURIComponent(service)}&include_waitlist=true`),
   bookings: async () => {
     const response = await api<BookingsResponse | RawBooking[] | { bookings: { data?: RawBooking[] } | RawBooking[] } | { data?: RawBooking[] }>("/bookings");
     if (Array.isArray(response)) return { bookings: normalizeBookings(response) } satisfies BookingsResponse;
@@ -51,6 +51,9 @@ export const endpoints = {
     return { ...response, booking: response.booking ? normalizeBooking(response.booking) : undefined };
   },
   cancelBooking: (id: string | number) => api<{ status?: boolean; message?: string }>(`/bookings/${id}/cancel`, { method: "POST" }),
+  waitlist: () => api<WaitlistResponse>("/waitlist"),
+  joinWaitlist: (body: { staff_id: string | number; service_id: string | number; date: string; time: string }) => api<WaitlistCreateResponse>("/waitlist", { method: "POST", body }),
+  leaveWaitlist: (id: string | number) => api<{ status?: boolean; message?: string }>(`/waitlist/${id}`, { method: "DELETE" }),
   products: () => api<ProductsResponse>("/products"),
   favorites: () => api<Product[] | ProductsResponse | { favorites: Product[] }>("/favorites"),
   addFavorite: (id: string | number) => api<unknown>(`/favorites/${id}`, { method: "POST" }),

@@ -6,13 +6,6 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "admin.mottolasfamily.it",
-        port: "",
-        pathname: "/**",
-        search: "",
-      },
-      {
         protocol: "http",
         hostname: "127.0.0.1",
         port: "8000",

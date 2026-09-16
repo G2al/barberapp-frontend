@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { authErrorFeedback, readableAuthMessage, PASSWORD_MIN_LENGTH } from "../src/lib/auth/form-feedback.ts";
 
-test("password policy matches the local Mottola backend", () => {
+test("password policy matches the local backend", () => {
   assert.equal(PASSWORD_MIN_LENGTH, 6);
 });
 test("email and phone uniqueness errors are field-specific", () => {
